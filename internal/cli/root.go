@@ -13,6 +13,9 @@ var rootCmd = &cobra.Command{
 	Use:   consts.AppName,
 	Short: consts.Desc,
 	Long:  `A minimal file-based DBMS engine with built-in server support.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		repl()
+	},
 }
 
 func Execute() {
