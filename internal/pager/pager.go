@@ -3,6 +3,7 @@ package pager
 import (
 	"io"
 
+	"github.com/harishtpj/havensql/internal/consts"
 	"github.com/harishtpj/havensql/internal/storage"
 )
 
@@ -29,7 +30,7 @@ func Open(path string) (*Pager, error) {
 		if err != nil {
 			return nil, err
 		}
-		nPages = uint32((nBytes + PageSize - 1) / PageSize)
+		nPages = uint32((nBytes + consts.PageSize - 1) / consts.PageSize)
 	}
 	pages := make(map[uint32]*Page)
 	return &Pager{file, pages, nPages}, nil
@@ -41,11 +42,11 @@ func (p *Pager) GetPage(pNum uint32) (*Page, error) {
 	}
 
 	pg := &Page{
-		Data: make([]byte, PageSize),
+		Data: make([]byte, consts.PageSize),
 	}
 
 	if pNum < p.nPages {
-		offset := int64(pNum) * PageSize
+		offset := int64(pNum) * consts.PageSize
 		_, err := p.file.ReadAt(pg.Data, offset)
 		if err != nil && err != io.EOF {
 			return nil, err
@@ -63,7 +64,7 @@ func (p *Pager) FlushPage(pNum uint32) error {
 	if !ok || pg == nil {
 		return nil
 	}
-	offset := int64(pNum) * PageSize
+	offset := int64(pNum) * consts.PageSize
 	_, err := p.file.WriteAt(pg.Data, offset)
 	if err != nil {
 		return err

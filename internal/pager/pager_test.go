@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/harishtpj/havensql/internal/consts"
 )
 
 func TestOpenMemoryPager(t *testing.T) {
@@ -42,8 +44,8 @@ func TestGetPageCreatesNewPage(t *testing.T) {
 		t.Fatal("expected page, got nil")
 	}
 
-	if len(page.Data) != PageSize {
-		t.Fatalf("expected page size %d, got %d", PageSize, len(page.Data))
+	if len(page.Data) != consts.PageSize {
+		t.Fatalf("expected page size %d, got %d", consts.PageSize, len(page.Data))
 	}
 
 	if p.nPages != 1 {
@@ -91,7 +93,6 @@ func TestPagerFlushPage(t *testing.T) {
 
 	p.Close()
 
-	// reopen pager and verify persistence
 	p2, err := Open(path)
 	if err != nil {
 		t.Fatal(err)
@@ -205,7 +206,7 @@ func TestPagerFileGrowth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := int64(6 * PageSize)
+	expected := int64(6 * consts.PageSize)
 	if info.Size() != expected {
 		t.Fatalf("expected file size %d got %d", expected, info.Size())
 	}
