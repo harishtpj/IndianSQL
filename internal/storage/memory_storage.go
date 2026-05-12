@@ -1,5 +1,7 @@
 package storage
 
+import "io"
+
 type MemoryStorage struct {
 	data []byte
 }
@@ -9,19 +11,24 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 func (ms *MemoryStorage) ReadAt(b []byte, off int64) (n int, err error) {
-	if off >= int64(len(ms.data)) {
-		return 0, nil
+	if size, _ := ms.Size(); off >= size {
+		return 0, io.EOF
 	}
 	n = copy(b, ms.data[off:])
+	if n < len(b) {
+		return n, io.EOF
+	}
 	return n, nil
 }
 
 func (ms *MemoryStorage) WriteAt(b []byte, off int64) (n int, err error) {
-	// TODO: Handle partial writes
-	if l := int64(len(ms.data)); off >= l {
-		ms.data = append(ms.data, make([]byte, off-l+1)...)
+	end := off + int64(len(b))
+	size, _ := ms.Size()
+	if end > size {
+		diff := end - size
+		ms.data = append(ms.data, make([]byte, diff)...)
 	}
-	n = copy(ms.data[off:], b)
+	n = copy(ms.data[off:end], b)
 	return n, nil
 }
 
