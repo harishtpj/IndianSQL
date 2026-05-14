@@ -15,9 +15,7 @@ func TestCellSizeMatchesEncoding(t *testing.T) {
 
 	buf := make([]byte, sz)
 
-	if err := c.Encode(buf); err != nil {
-		t.Fatal(err)
-	}
+	c.Encode(buf)
 
 	if uint16(len(buf)) != sz {
 		t.Fatalf("encoded size mismatch")
@@ -33,9 +31,7 @@ func TestCellEncodeDecodeRoundTrip(t *testing.T) {
 	sz := orig.Size()
 	buf := make([]byte, sz)
 
-	if err := orig.Encode(buf); err != nil {
-		t.Fatal(err)
-	}
+	orig.Encode(buf)
 
 	decoded, err := DecodeCell(buf)
 	if err != nil {
@@ -122,9 +118,7 @@ func TestCellEmptyValue(t *testing.T) {
 
 	buf := make([]byte, sz)
 
-	if err := c.Encode(buf); err != nil {
-		t.Fatal(err)
-	}
+	c.Encode(buf)
 
 	decoded, err := DecodeCell(buf)
 	if err != nil {

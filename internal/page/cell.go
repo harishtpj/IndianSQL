@@ -19,11 +19,10 @@ func (c *Cell) Size() uint16 {
 	return uint16(valOffset + len(c.Value))
 }
 
-func (c *Cell) Encode(dst []byte) error {
+func (c *Cell) Encode(dst []byte) {
 	binary.BigEndian.PutUint64(dst, c.Key)
 	binary.BigEndian.PutUint16(dst[valSizeOffset:], uint16(len(c.Value)))
 	copy(dst[valOffset:], c.Value)
-	return nil
 }
 
 func DecodeCell(src []byte) (*Cell, error) {

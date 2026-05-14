@@ -14,7 +14,7 @@ func newTestPage() *SlottedPage {
 
 	h.Encode(buf)
 
-	return NewSlottedPage(buf)
+	return WrapSlottedPage(buf)
 }
 
 func newCell(k uint64, v string) *Cell {
@@ -71,7 +71,7 @@ func TestInsertSingleCell(t *testing.T) {
 		t.Fatalf("expected 1 cell, got %d", h.CellCount)
 	}
 
-	got, err := sp.GetCell(0)
+	got, err := DecodeCell(sp.GetCellRaw(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestMultipleInsert(t *testing.T) {
 	}
 
 	for i := 0; i < 50; i++ {
-		c, err := sp.GetCell(uint16(i))
+		c, err := DecodeCell(sp.GetCellRaw(uint16(i)))
 		if err != nil {
 			t.Fatal(err)
 		}

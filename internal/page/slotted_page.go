@@ -9,8 +9,22 @@ type SlottedPage struct {
 	data []byte
 }
 
-func NewSlottedPage(data []byte) *SlottedPage {
+func WrapSlottedPage(data []byte) *SlottedPage {
 	return &SlottedPage{data: data}
+}
+
+func NewSlottedPage(data []byte, pgType PageType) *SlottedPage {
+	sp := &SlottedPage{data: data}
+
+	h := PageHeader{
+		Type:      pgType,
+		FreeStart: PageHeaderSize,
+		FreeEnd:   uint16(len(data)),
+		CellCount: 0,
+	}
+
+	sp.SetHeader(h)
+	return sp
 }
 
 func (sp *SlottedPage) Header() PageHeader {
@@ -64,11 +78,9 @@ func (sp *SlottedPage) appendSlot(off uint16) {
 	sp.SetHeader(pgHdr)
 }
 
-func (sp *SlottedPage) InsertCell(c *Cell) error {
+func (sp *SlottedPage) InsertCell(c PageCell) error {
 	buf := make([]byte, c.Size())
-	if err := c.Encode(buf); err != nil {
-		return err
-	}
+	c.Encode(buf)
 	off, err := sp.writeCellRaw(buf)
 	if err != nil {
 		return err
@@ -80,6 +92,6 @@ func (sp *SlottedPage) InsertCell(c *Cell) error {
 	return nil
 }
 
-func (sp *SlottedPage) GetCell(idx uint16) (*Cell, error) {
-	return DecodeCell(sp.data[sp.getSlot(idx):])
+func (sp *SlottedPage) GetCellRaw(idx uint16) []byte {
+	return sp.data[sp.getSlot(idx):]
 }
