@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/harishtpj/havensql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/consts"
 )
 
 var rootCmd = &cobra.Command{

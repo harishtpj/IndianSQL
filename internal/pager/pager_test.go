@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/harishtpj/havensql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/consts"
 )
 
 func TestOpenMemoryPager(t *testing.T) {

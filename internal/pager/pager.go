@@ -3,8 +3,8 @@ package pager
 import (
 	"io"
 
-	"github.com/harishtpj/havensql/internal/consts"
-	"github.com/harishtpj/havensql/internal/storage"
+	"github.com/harishtpj/indiansql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/storage"
 )
 
 type Pager struct {

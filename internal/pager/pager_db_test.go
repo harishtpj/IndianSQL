@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/harishtpj/havensql/internal/consts"
-	"github.com/harishtpj/havensql/internal/page"
+	"github.com/harishtpj/indiansql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/page"
 )
 
 func TestDatabaseHeaderPersistence(t *testing.T) {

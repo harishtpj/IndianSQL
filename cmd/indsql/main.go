@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/harishtpj/havensql/internal/cli"
+	"github.com/harishtpj/indiansql/internal/cli"
 )
 
 func main() {

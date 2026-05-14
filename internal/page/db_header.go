@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"github.com/harishtpj/havensql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/consts"
 )
 
 // DB Header is Fixed to 100 Bytes
@@ -39,7 +39,7 @@ func InitDBHeader(page []byte, pgSize uint32) error {
 		PageCount: 1,
 	}
 
-	copy(hdr.Magic[:], []byte(consts.MagicStr))
+	copy(hdr.Magic[:], consts.MagicStr)
 	return hdr.Encode(page)
 }
 
@@ -65,13 +65,13 @@ func DecodeDBHeader(src []byte) (*DBHeader, error) {
 	copy(hdr.Magic[:], src[:magicStrLen])
 
 	if !bytes.Equal(hdr.Magic[:], []byte(consts.MagicStr)) {
-		return nil, errors.New("Corrupted File! Magic String not found!")
+		return nil, errors.New("corrupted File! Magic String not found")
 	}
 
 	hdr.Version = binary.BigEndian.Uint16(src[versionOffset:])
 
 	if hdr.Version != consts.VersionNum {
-		return nil, errors.New("Unsupported Version!")
+		return nil, errors.New("unsupported Version")
 	}
 
 	hdr.PageSize = binary.BigEndian.Uint32(src[pageSizeOffset:])

@@ -7,17 +7,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/harishtpj/havensql/internal/consts"
-	"github.com/harishtpj/havensql/internal/pager"
+	"github.com/harishtpj/indiansql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/pager"
 )
 
 func printBanner() {
-	fmt.Printf("HavenSQL v%s\n", consts.Version)
+	fmt.Printf("IndianSQL v%s\n", consts.Version)
 	fmt.Println("Enter 'help' for more information.")
 }
 
 func printPrompt() {
-	fmt.Print("hsdb >>> ")
+	fmt.Print("indsql >>> ")
 }
 
 func getInput() (cmd string, args string) {

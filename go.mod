@@ -1,4 +1,4 @@
-module github.com/harishtpj/havensql
+module github.com/harishtpj/indiansql
 
 go 1.25.1
 

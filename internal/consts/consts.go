@@ -5,9 +5,9 @@ const (
 	VersionNum = 1
 	Author     = "Harish Kumar"
 	Desc       = "A minimal file-based DBMS engine."
-	AppName    = "hsdb"
+	AppName    = "indsql"
 
 	PageSize = 4096
 
-	MagicStr = "HAVENSQL FILE FORMAT v1\000"
+	MagicStr = "INDIANSQL FILE FORMAT v1"
 )

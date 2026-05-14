@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/harishtpj/havensql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/consts"
 )
 
 func TestInitDBHeader(t *testing.T) {
