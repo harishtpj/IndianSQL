@@ -36,6 +36,10 @@ func Open(path string) (*Pager, error) {
 	return &Pager{file, pages, nPages}, nil
 }
 
+func (p *Pager) PageCount() uint32 {
+	return p.nPages
+}
+
 func (p *Pager) GetPage(pNum uint32) (*Page, error) {
 	if pg, ok := p.pages[pNum]; ok {
 		return pg, nil

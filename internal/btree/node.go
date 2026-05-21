@@ -34,6 +34,14 @@ func (n *Node) IsInternal() bool {
 	return n.page.Header().Type == page.PageTypeInternal
 }
 
+func (n *Node) Header() page.PageHeader {
+	return n.page.Header()
+}
+
+func (n *Node) SetHeader(h page.PageHeader) {
+	n.page.SetHeader(h)
+}
+
 func (n *Node) CellCount() int {
 	return int(n.page.Header().CellCount)
 }
@@ -100,14 +108,6 @@ func (n *Node) ChildAt(idx int) (uint32, error) {
 		return 0, err
 	}
 	return ic.Child, nil
-}
-
-func (n *Node) InsertLeafCell(pos int, cell *page.Cell) error {
-	if !n.IsLeaf() {
-		return errors.New("cannot insert leaf cell into internal node")
-	}
-
-	return n.page.InsertCell(uint16(pos), cell)
 }
 
 func (n *Node) HasSpaceFor(cellSize uint16) bool {

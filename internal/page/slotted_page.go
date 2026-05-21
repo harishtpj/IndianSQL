@@ -112,3 +112,7 @@ func (sp *SlottedPage) AppendCell(c PageCell) error {
 func (sp *SlottedPage) GetCellRaw(idx uint16) []byte {
 	return sp.data[sp.getSlot(idx):]
 }
+
+func (sp *SlottedPage) Data() []byte {
+	return sp.data
+}
