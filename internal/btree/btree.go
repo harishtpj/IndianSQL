@@ -1,8 +1,10 @@
 package btree
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/harishtpj/indiansql/internal/page"
 	"github.com/harishtpj/indiansql/internal/pager"
 )
 
@@ -42,4 +44,25 @@ func (t *BTree) FindLeaf(key uint64) (*Node, int, bool, error) {
 			return nil, 0, false, err
 		}
 	}
+}
+
+func (t *BTree) Insert(key uint64, value []byte) error {
+	leaf, pos, found, err := t.FindLeaf(key)
+	if err != nil {
+		return err
+	}
+
+	if found {
+		return errors.New("duplicate key")
+	}
+
+	cell := &page.Cell{
+		Key:   key,
+		Value: value,
+	}
+
+	if !leaf.page.HasSpace(cell.Size()) {
+		return errors.New("insufficient space! leaf split required")
+	}
+	return leaf.InsertLeafCell(pos, cell)
 }

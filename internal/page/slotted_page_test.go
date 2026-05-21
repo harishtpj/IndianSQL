@@ -61,7 +61,7 @@ func TestInsertSingleCell(t *testing.T) {
 
 	cell := newCell(10, "hello")
 
-	if err := sp.InsertCell(cell); err != nil {
+	if err := sp.AppendCell(cell); err != nil {
 		t.Fatal(err)
 	}
 
@@ -89,7 +89,7 @@ func TestMultipleInsert(t *testing.T) {
 	sp := newTestPage()
 
 	for i := 0; i < 50; i++ {
-		err := sp.InsertCell(newCell(uint64(i), "x"))
+		err := sp.AppendCell(newCell(uint64(i), "x"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +118,7 @@ func TestFreeSpaceReduction(t *testing.T) {
 
 	before := sp.FreeSpace()
 
-	err := sp.InsertCell(newCell(1, "abc"))
+	err := sp.AppendCell(newCell(1, "abc"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestPageFull(t *testing.T) {
 	large := make([]byte, 200)
 
 	for {
-		err := sp.InsertCell(&Cell{
+		err := sp.AppendCell(&Cell{
 			Key:   1,
 			Value: large,
 		})
@@ -151,7 +151,7 @@ func TestSlotOffsetsValid(t *testing.T) {
 	sp := newTestPage()
 
 	for i := 0; i < 10; i++ {
-		sp.InsertCell(newCell(uint64(i), "data"))
+		sp.AppendCell(newCell(uint64(i), "data"))
 	}
 
 	h := sp.Header()
@@ -161,6 +161,45 @@ func TestSlotOffsetsValid(t *testing.T) {
 
 		if off < PageHeaderSize || off >= testPageSize {
 			t.Fatalf("slot offset out of bounds: %d", off)
+		}
+	}
+}
+
+func TestInsertCellSorted(t *testing.T) {
+	sp := newTestPage()
+
+	insertions := []struct {
+		pos uint16
+		key uint64
+		val string
+	}{
+		{0, 30, "a"},
+		{0, 10, "b"},
+		{1, 20, "c"},
+	}
+
+	for _, in := range insertions {
+		err := sp.InsertCell(in.pos, newCell(in.key, in.val))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	expected := []uint64{10, 20, 30}
+
+	for i, want := range expected {
+		cell, err := DecodeCell(sp.GetCellRaw(uint16(i)))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if cell.Key != want {
+			t.Fatalf(
+				"wrong key at index %d: got=%d want=%d",
+				i,
+				cell.Key,
+				want,
+			)
 		}
 	}
 }

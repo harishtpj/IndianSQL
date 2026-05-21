@@ -96,5 +96,16 @@ func (n *Node) ChildAt(idx int) (uint32, error) {
 	}
 
 	ic, err := page.DecodeInternalCell(n.page.GetCellRaw(uint16(idx)))
-	return ic.Value, err
+	if err != nil {
+		return 0, err
+	}
+	return ic.Value, nil
+}
+
+func (n *Node) InsertLeafCell(pos int, cell *page.Cell) error {
+	if !n.IsLeaf() {
+		return errors.New("cannot insert leaf cell into internal node")
+	}
+
+	return n.page.InsertCell(uint16(pos), cell)
 }

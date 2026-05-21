@@ -21,7 +21,7 @@ func (ic *InternalCell) Encode(dst []byte) {
 
 func DecodeInternalCell(src []byte) (*InternalCell, error) {
 	if len(src) < 12 {
-		return nil, errors.New("invalid internal cell size!")
+		return nil, errors.New("invalid internal cell size")
 	}
 
 	return &InternalCell{

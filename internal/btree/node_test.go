@@ -30,7 +30,7 @@ func TestNodeKeyAtLeaf(t *testing.T) {
 		Value: []byte("a"),
 	}
 
-	if err := n.page.InsertCell(cell); err != nil {
+	if err := n.page.AppendCell(cell); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +57,7 @@ func TestNodeFindPosition(t *testing.T) {
 			Value: []byte("x"),
 		}
 
-		if err := n.page.InsertCell(cell); err != nil {
+		if err := n.page.AppendCell(cell); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -95,7 +95,7 @@ func TestNodeChildAt(t *testing.T) {
 		Value: 123,
 	}
 
-	if err := n.page.InsertCell(ic); err != nil {
+	if err := n.page.AppendCell(ic); err != nil {
 		t.Fatal(err)
 	}
 
@@ -115,5 +115,50 @@ func TestNodeChildAt(t *testing.T) {
 
 	if right != 99 {
 		t.Fatalf("expected right child 99")
+	}
+}
+
+func TestNodeInsertLeafCellSorted(t *testing.T) {
+	p := newTestPager(t)
+
+	n := createLeafNode(t, p, 0)
+
+	keys := []uint64{30, 10, 20}
+
+	for _, k := range keys {
+		pos, found, err := n.FindPosition(k)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if found {
+			t.Fatal("duplicate key")
+		}
+
+		err = n.InsertLeafCell(pos, &page.Cell{
+			Key:   k,
+			Value: []byte("x"),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	expected := []uint64{10, 20, 30}
+
+	for i, want := range expected {
+		got, err := n.KeyAt(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got != want {
+			t.Fatalf(
+				"wrong key at index %d: got=%d want=%d",
+				i,
+				got,
+				want,
+			)
+		}
 	}
 }

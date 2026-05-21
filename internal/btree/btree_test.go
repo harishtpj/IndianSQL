@@ -11,7 +11,7 @@ func TestBTreeFindLeafSingleNode(t *testing.T) {
 
 	n := createLeafNode(t, p, 0)
 
-	err := n.page.InsertCell(&page.Cell{
+	err := n.page.AppendCell(&page.Cell{
 		Key:   10,
 		Value: []byte("x"),
 	})
@@ -51,7 +51,7 @@ func TestBTreeTraversal(t *testing.T) {
 		Value: 1, // left child page
 	}
 
-	if err := root.page.InsertCell(ic); err != nil {
+	if err := root.page.AppendCell(ic); err != nil {
 		t.Fatal(err)
 	}
 
@@ -73,5 +73,63 @@ func TestBTreeTraversal(t *testing.T) {
 
 	if leaf.pageID != right.pageID {
 		t.Fatal("should go to right child")
+	}
+}
+
+func TestBTreeInsertSorted(t *testing.T) {
+	p := newTestPager(t)
+
+	createLeafNode(t, p, 0)
+
+	tree := NewTree(p, 0)
+
+	keys := []uint64{30, 10, 20}
+
+	for _, k := range keys {
+		err := tree.Insert(k, []byte("x"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	leaf, _, _, err := tree.FindLeaf(20)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []uint64{10, 20, 30}
+
+	for i, want := range expected {
+		got, err := leaf.KeyAt(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got != want {
+			t.Fatalf(
+				"wrong key at index %d: got=%d want=%d",
+				i,
+				got,
+				want,
+			)
+		}
+	}
+}
+
+func TestBTreeInsertDuplicate(t *testing.T) {
+	p := newTestPager(t)
+
+	createLeafNode(t, p, 0)
+
+	tree := NewTree(p, 0)
+
+	err := tree.Insert(10, []byte("a"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tree.Insert(10, []byte("b"))
+	if err == nil {
+		t.Fatal("expected duplicate key error")
 	}
 }

@@ -71,6 +71,16 @@ func (sp *SlottedPage) writeCellRaw(data []byte) (uint16, error) {
 	return pgHdr.FreeEnd, nil
 }
 
+func (sp *SlottedPage) insertSlot(idx uint16, off uint16) {
+	pgHdr := sp.Header()
+	for i := pgHdr.CellCount; i > idx; i-- {
+		sp.setSlot(i, sp.getSlot(i-1))
+	}
+	sp.setSlot(idx, off)
+	pgHdr.FreeStart += 2
+	sp.SetHeader(pgHdr)
+}
+
 func (sp *SlottedPage) appendSlot(off uint16) {
 	pgHdr := sp.Header()
 	binary.BigEndian.PutUint16(sp.data[pgHdr.FreeStart:], off)
@@ -78,18 +88,23 @@ func (sp *SlottedPage) appendSlot(off uint16) {
 	sp.SetHeader(pgHdr)
 }
 
-func (sp *SlottedPage) InsertCell(c PageCell) error {
+func (sp *SlottedPage) InsertCell(idx uint16, c PageCell) error {
 	buf := make([]byte, c.Size())
 	c.Encode(buf)
+
 	off, err := sp.writeCellRaw(buf)
 	if err != nil {
 		return err
 	}
-	sp.appendSlot(off)
+	sp.insertSlot(idx, off)
 	pgHdr := sp.Header()
 	pgHdr.CellCount++
 	sp.SetHeader(pgHdr)
 	return nil
+}
+
+func (sp *SlottedPage) AppendCell(c PageCell) error {
+	return sp.InsertCell(sp.Header().CellCount, c)
 }
 
 func (sp *SlottedPage) GetCellRaw(idx uint16) []byte {
