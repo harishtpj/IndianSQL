@@ -1,8 +1,10 @@
 package btree
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/harishtpj/indiansql/internal/apperrors"
 	"github.com/harishtpj/indiansql/internal/page"
 )
 
@@ -48,7 +50,7 @@ func TestBTreeTraversal(t *testing.T) {
 
 	ic := &page.InternalCell{
 		Key:   50,
-		Value: 1, // left child page
+		Child: 1, // left child page
 	}
 
 	if err := root.page.AppendCell(ic); err != nil {
@@ -131,5 +133,8 @@ func TestBTreeInsertDuplicate(t *testing.T) {
 	err = tree.Insert(10, []byte("b"))
 	if err == nil {
 		t.Fatal("expected duplicate key error")
+	}
+	if !errors.Is(err, apperrors.ErrDuplicateKey) {
+		t.Fatalf("expected ErrDuplicateKey, got %v", err)
 	}
 }

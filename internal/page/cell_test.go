@@ -2,7 +2,10 @@ package page
 
 import (
 	"bytes"
+	"errors"
 	"testing"
+
+	"github.com/harishtpj/indiansql/internal/apperrors"
 )
 
 func TestCellSizeMatchesEncoding(t *testing.T) {
@@ -138,5 +141,20 @@ func TestCellCorruptedInput(t *testing.T) {
 	_, err := DecodeCell([]byte{1, 2, 3})
 	if err == nil {
 		t.Fatalf("expected error for corrupted cell")
+	}
+
+	if !errors.Is(err, apperrors.ErrInvalidCell) {
+		t.Fatalf("expected ErrInvalidCell, got %v", err)
+	}
+}
+
+func TestDecodeInternalCellCorruptedInput(t *testing.T) {
+	_, err := DecodeInternalCell([]byte{1, 2, 3})
+	if err == nil {
+		t.Fatalf("expected error for corrupted internal cell")
+	}
+
+	if !errors.Is(err, apperrors.ErrInvalidCell) {
+		t.Fatalf("expected ErrInvalidCell, got %v", err)
 	}
 }

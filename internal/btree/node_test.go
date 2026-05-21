@@ -92,7 +92,7 @@ func TestNodeChildAt(t *testing.T) {
 
 	ic := &page.InternalCell{
 		Key:   50,
-		Value: 123,
+		Child: 123,
 	}
 
 	if err := n.page.AppendCell(ic); err != nil {

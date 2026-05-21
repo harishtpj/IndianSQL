@@ -1,6 +1,11 @@
 package page
 
-import "testing"
+import (
+	"errors"
+	"testing"
+
+	"github.com/harishtpj/indiansql/internal/apperrors"
+)
 
 const testPageSize = 4096
 
@@ -68,6 +73,10 @@ func TestDecodePageHeaderInvalidSize(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for short buffer")
 	}
+
+	if !errors.Is(err, apperrors.ErrInvalidHeader) {
+		t.Fatalf("expected ErrInvalidHeader, got %v", err)
+	}
 }
 
 func TestDecodePageHeaderInvalidType(t *testing.T) {
@@ -78,5 +87,9 @@ func TestDecodePageHeaderInvalidType(t *testing.T) {
 	_, err := DecodePageHeader(buf)
 	if err == nil {
 		t.Fatalf("expected invalid page type error")
+	}
+
+	if !errors.Is(err, apperrors.ErrInvalidHeader) {
+		t.Fatalf("expected ErrInvalidHeader, got %v", err)
 	}
 }

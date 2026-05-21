@@ -99,7 +99,7 @@ func (n *Node) ChildAt(idx int) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return ic.Value, nil
+	return ic.Child, nil
 }
 
 func (n *Node) InsertLeafCell(pos int, cell *page.Cell) error {
@@ -108,4 +108,8 @@ func (n *Node) InsertLeafCell(pos int, cell *page.Cell) error {
 	}
 
 	return n.page.InsertCell(uint16(pos), cell)
+}
+
+func (n *Node) HasSpaceFor(cellSize uint16) bool {
+	return n.page.HasSpace(cellSize)
 }

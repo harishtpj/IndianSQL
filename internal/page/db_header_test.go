@@ -2,8 +2,10 @@ package page
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 
+	"github.com/harishtpj/indiansql/internal/apperrors"
 	"github.com/harishtpj/indiansql/internal/consts"
 )
 
@@ -93,6 +95,10 @@ func TestDBHeaderRejectsBadMagic(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for bad magic")
 	}
+
+	if !errors.Is(err, apperrors.ErrInvalidHeader) {
+		t.Fatalf("expected ErrInvalidHeader, got %v", err)
+	}
 }
 
 func TestDBHeaderRejectsWrongVersion(t *testing.T) {
@@ -109,6 +115,21 @@ func TestDBHeaderRejectsWrongVersion(t *testing.T) {
 	_, err = DecodeDBHeader(page)
 	if err == nil {
 		t.Fatalf("expected version error")
+	}
+
+	if !errors.Is(err, apperrors.ErrInvalidHeader) {
+		t.Fatalf("expected ErrInvalidHeader, got %v", err)
+	}
+}
+
+func TestDBHeaderRejectsShortBuffer(t *testing.T) {
+	_, err := DecodeDBHeader(make([]byte, 10))
+	if err == nil {
+		t.Fatalf("expected short buffer error")
+	}
+
+	if !errors.Is(err, apperrors.ErrDBHeaderSmall) {
+		t.Fatalf("expected ErrDBHeaderSmall, got %v", err)
 	}
 }
 

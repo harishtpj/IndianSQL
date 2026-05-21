@@ -2,8 +2,9 @@ package page
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
 
+	"github.com/harishtpj/indiansql/internal/apperrors"
 	"github.com/harishtpj/indiansql/internal/consts"
 )
 
@@ -46,27 +47,27 @@ func DecodePageHeader(src []byte) (hdr *PageHeader, err error) {
 	hdr = &PageHeader{}
 
 	if len(src) < PageHeaderSize {
-		err = errors.New("Page Header too small")
+		err = fmt.Errorf("decode page header: %w", apperrors.ErrInvalidHeader)
 		return
 	}
 
 	if hdr.Type = PageType(src[0]); hdr.Type >= MaxPageType {
-		err = errors.New("Invalid Page Type")
+		err = fmt.Errorf("decode page header: invalid page type %d: %w", hdr.Type, apperrors.ErrInvalidHeader)
 		return
 	}
 
 	hdr.FreeStart = binary.BigEndian.Uint16(src[freeStartOffset:])
 	if hdr.FreeStart < PageHeaderSize {
-		err = errors.New("Page Start within Header!")
+		err = fmt.Errorf("decode page header: free start %d within header: %w", hdr.FreeStart, apperrors.ErrInvalidHeader)
 		return
 	}
 
 	hdr.FreeEnd = binary.BigEndian.Uint16(src[freeEndOffset:])
 	if hdr.FreeStart > hdr.FreeEnd {
-		err = errors.New("Page Start is out of bound!")
+		err = fmt.Errorf("decode page header: free start %d beyond free end %d: %w", hdr.FreeStart, hdr.FreeEnd, apperrors.ErrInvalidHeader)
 		return
 	} else if hdr.FreeEnd > uint16(len(src)) {
-		err = errors.New("Page End is out of bounds!")
+		err = fmt.Errorf("decode page header: free end %d beyond buffer size %d: %w", hdr.FreeEnd, len(src), apperrors.ErrInvalidHeader)
 		return
 	}
 

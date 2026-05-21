@@ -2,7 +2,9 @@ package page
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
+
+	"github.com/harishtpj/indiansql/internal/apperrors"
 )
 
 type SlottedPage struct {
@@ -61,7 +63,7 @@ func (sp *SlottedPage) writeCellRaw(data []byte) (uint16, error) {
 	cellSize := uint16(len(data))
 
 	if !sp.HasSpace(cellSize) {
-		return 0, errors.New("cell size is too small")
+		return 0, fmt.Errorf("write cell raw: %w", apperrors.ErrNodeFull)
 	}
 
 	pgHdr.FreeEnd -= cellSize

@@ -2,12 +2,14 @@ package page
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
+
+	"github.com/harishtpj/indiansql/internal/apperrors"
 )
 
 type InternalCell struct {
 	Key   uint64
-	Value uint32
+	Child uint32
 }
 
 func (ic *InternalCell) Size() uint16 {
@@ -16,16 +18,16 @@ func (ic *InternalCell) Size() uint16 {
 
 func (ic *InternalCell) Encode(dst []byte) {
 	binary.BigEndian.PutUint64(dst, ic.Key)
-	binary.BigEndian.PutUint32(dst[8:], ic.Value)
+	binary.BigEndian.PutUint32(dst[8:], ic.Child)
 }
 
 func DecodeInternalCell(src []byte) (*InternalCell, error) {
 	if len(src) < 12 {
-		return nil, errors.New("invalid internal cell size")
+		return nil, fmt.Errorf("decode internal cell: %w", apperrors.ErrInvalidCell)
 	}
 
 	return &InternalCell{
 		Key:   binary.BigEndian.Uint64(src),
-		Value: binary.BigEndian.Uint32(src[8:]),
+		Child: binary.BigEndian.Uint32(src[8:]),
 	}, nil
 }

@@ -3,8 +3,9 @@ package page
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
+	"fmt"
 
+	"github.com/harishtpj/indiansql/internal/apperrors"
 	"github.com/harishtpj/indiansql/internal/consts"
 )
 
@@ -57,7 +58,7 @@ func (h *DBHeader) Encode(dst []byte) error {
 
 func DecodeDBHeader(src []byte) (*DBHeader, error) {
 	if len(src) < reservedOffset+reservedSize {
-		return nil, errors.New("DB Header too small")
+		return nil, fmt.Errorf("decode db header: %w", apperrors.ErrDBHeaderSmall)
 	}
 
 	var hdr DBHeader
@@ -65,13 +66,13 @@ func DecodeDBHeader(src []byte) (*DBHeader, error) {
 	copy(hdr.Magic[:], src[:magicStrLen])
 
 	if !bytes.Equal(hdr.Magic[:], []byte(consts.MagicStr)) {
-		return nil, errors.New("corrupted File! Magic String not found")
+		return nil, fmt.Errorf("decode db header: magic string mismatch: %w", apperrors.ErrInvalidHeader)
 	}
 
 	hdr.Version = binary.BigEndian.Uint16(src[versionOffset:])
 
 	if hdr.Version != consts.VersionNum {
-		return nil, errors.New("unsupported Version")
+		return nil, fmt.Errorf("decode db header: unsupported version %d: %w", hdr.Version, apperrors.ErrInvalidHeader)
 	}
 
 	hdr.PageSize = binary.BigEndian.Uint32(src[pageSizeOffset:])

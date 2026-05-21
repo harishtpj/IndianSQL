@@ -2,7 +2,9 @@ package page
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
+
+	"github.com/harishtpj/indiansql/internal/apperrors"
 )
 
 const (
@@ -27,7 +29,7 @@ func (c *Cell) Encode(dst []byte) {
 
 func DecodeCell(src []byte) (*Cell, error) {
 	if len(src) < valSizeOffset {
-		return nil, errors.New("invalid cell size")
+		return nil, fmt.Errorf("decode cell: %w", apperrors.ErrInvalidCell)
 	}
 
 	var c Cell
