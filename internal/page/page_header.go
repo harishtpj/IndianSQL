@@ -13,7 +13,8 @@ const (
 	freeEndOffset    = freeStartOffset + 2
 	cellCountOffset  = freeEndOffset + 2
 	rightChildOffset = cellCountOffset + 2
-	PageHeaderSize   = rightChildOffset + 4
+	parentPageOffset = rightChildOffset + 4
+	PageHeaderSize   = parentPageOffset + 4
 )
 
 type PageHeader struct {
@@ -22,6 +23,7 @@ type PageHeader struct {
 	FreeEnd    uint16
 	CellCount  uint16
 	RightChild uint32
+	ParentPage uint32
 }
 
 func InitPage(page []byte, tp PageType) error {
@@ -40,6 +42,7 @@ func (h *PageHeader) Encode(dst []byte) error {
 	binary.BigEndian.PutUint16(dst[freeEndOffset:], h.FreeEnd)
 	binary.BigEndian.PutUint16(dst[cellCountOffset:], h.CellCount)
 	binary.BigEndian.PutUint32(dst[rightChildOffset:], h.RightChild)
+	binary.BigEndian.PutUint32(dst[parentPageOffset:], h.ParentPage)
 	return nil
 }
 
@@ -73,5 +76,14 @@ func DecodePageHeader(src []byte) (hdr *PageHeader, err error) {
 
 	hdr.CellCount = binary.BigEndian.Uint16(src[cellCountOffset:])
 	hdr.RightChild = binary.BigEndian.Uint32(src[rightChildOffset:])
+	hdr.ParentPage = binary.BigEndian.Uint32(src[parentPageOffset:])
 	return
+}
+
+func (h *PageHeader) Parent() uint32 {
+	return h.ParentPage
+}
+
+func (h *PageHeader) SetParent(id uint32) {
+	h.ParentPage = id
 }

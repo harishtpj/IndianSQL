@@ -113,3 +113,13 @@ func (n *Node) ChildAt(idx int) (uint32, error) {
 func (n *Node) HasSpaceFor(cellSize uint16) bool {
 	return n.page.HasSpace(cellSize)
 }
+
+func (n *Node) ParentPageID() uint32 {
+	return n.Header().ParentPage
+}
+
+func (n *Node) SetParentPageID(id uint32) {
+	hdr := n.Header()
+	hdr.SetParent(id)
+	n.SetHeader(hdr)
+}
