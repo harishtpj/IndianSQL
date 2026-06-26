@@ -14,7 +14,9 @@ const (
 	cellCountOffset  = freeEndOffset + 2
 	rightChildOffset = cellCountOffset + 2
 	parentPageOffset = rightChildOffset + 4
-	PageHeaderSize   = parentPageOffset + 4
+	nextLeafOffset   = parentPageOffset + 4
+	prevLeafOffset   = nextLeafOffset + 4
+	PageHeaderSize   = prevLeafOffset + 4
 )
 
 type PageHeader struct {
@@ -24,6 +26,8 @@ type PageHeader struct {
 	CellCount  uint16
 	RightChild uint32
 	ParentPage uint32
+	NextLeaf   uint32
+	PrevLeaf   uint32
 }
 
 func InitPage(page []byte, tp PageType) error {
@@ -43,6 +47,8 @@ func (h *PageHeader) Encode(dst []byte) error {
 	binary.BigEndian.PutUint16(dst[cellCountOffset:], h.CellCount)
 	binary.BigEndian.PutUint32(dst[rightChildOffset:], h.RightChild)
 	binary.BigEndian.PutUint32(dst[parentPageOffset:], h.ParentPage)
+	binary.BigEndian.PutUint32(dst[nextLeafOffset:], h.NextLeaf)
+	binary.BigEndian.PutUint32(dst[prevLeafOffset:], h.PrevLeaf)
 	return nil
 }
 
@@ -77,6 +83,8 @@ func DecodePageHeader(src []byte) (hdr *PageHeader, err error) {
 	hdr.CellCount = binary.BigEndian.Uint16(src[cellCountOffset:])
 	hdr.RightChild = binary.BigEndian.Uint32(src[rightChildOffset:])
 	hdr.ParentPage = binary.BigEndian.Uint32(src[parentPageOffset:])
+	hdr.NextLeaf = binary.BigEndian.Uint32(src[nextLeafOffset:])
+	hdr.PrevLeaf = binary.BigEndian.Uint32(src[prevLeafOffset:])
 	return
 }
 
@@ -86,4 +94,20 @@ func (h *PageHeader) Parent() uint32 {
 
 func (h *PageHeader) SetParent(id uint32) {
 	h.ParentPage = id
+}
+
+func (h *PageHeader) GetNextLeaf() uint32 {
+	return h.NextLeaf
+}
+
+func (h *PageHeader) SetNextLeaf(id uint32) {
+	h.NextLeaf = id
+}
+
+func (h *PageHeader) GetPrevLeaf() uint32 {
+	return h.PrevLeaf
+}
+
+func (h *PageHeader) SetPrevLeaf(id uint32) {
+	h.PrevLeaf = id
 }

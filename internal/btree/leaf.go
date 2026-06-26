@@ -38,8 +38,20 @@ func (n *Node) ResetLeaf() {
 	if !n.IsLeaf() {
 		panic("ResetLeaf called on non-leaf node")
 	}
+
+	hdr := n.Header()
+	parent := hdr.Parent()
+	next := hdr.GetNextLeaf()
+	prev := hdr.GetPrevLeaf()
+
 	clear(n.page.Data())
 	page.InitPage(n.page.Data(), page.PageTypeLeaf)
+
+	hdr = n.Header()
+	hdr.SetParent(parent)
+	hdr.SetNextLeaf(next)
+	hdr.SetPrevLeaf(prev)
+	n.SetHeader(hdr)
 }
 
 func (n *Node) WriteLeafCells(cells []*page.Cell) error {
@@ -72,17 +84,47 @@ func (n *Node) SplitLeaf(newPageId uint32) (*SplitResult, error) {
 	mid := len(cells) / 2
 	left := cells[:mid]
 	right := cells[mid:]
+
+	oldHdr := n.Header()
+	oldNext := oldHdr.GetNextLeaf()
+	oldPrev := oldHdr.GetPrevLeaf()
+	parent := oldHdr.Parent()
+
 	if err := n.WriteLeafCells(left); err != nil {
 		return nil, err
 	}
+
+	leftHdr := n.Header()
+	leftHdr.SetParent(parent)
+	leftHdr.SetNextLeaf(newPageId)
+	leftHdr.SetPrevLeaf(oldPrev)
+	n.SetHeader(leftHdr)
 
 	rtNode, err := LoadNode(n.pager, newPageId)
 	if err != nil {
 		return nil, err
 	}
 	page.InitPage(rtNode.page.Data(), page.PageTypeLeaf)
+
+	rtHdr := rtNode.Header()
+	rtHdr.SetParent(parent)
+	rtHdr.SetNextLeaf(oldNext)
+	rtHdr.SetPrevLeaf(n.pageID)
+	rtNode.SetHeader(rtHdr)
+
 	if err := rtNode.WriteLeafCells(right); err != nil {
 		return nil, err
+	}
+
+	if oldNext != 0 {
+		nxtNode, err := LoadNode(n.pager, oldNext)
+		if err != nil {
+			return nil, err
+		}
+
+		hdr := nxtNode.Header()
+		hdr.SetPrevLeaf(newPageId)
+		nxtNode.SetHeader(hdr)
 	}
 
 	return &SplitResult{
