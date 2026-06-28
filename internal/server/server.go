@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/go-mysql-org/go-mysql/server"
-	"github.com/harishtpj/indiansql/internal/handler"
+	"github.com/harishtpj/indiansql/internal/engine"
 )
 
 type Server struct {
@@ -32,13 +32,13 @@ func (s *Server) Serve(dbFile string) error {
 }
 
 func (s *Server) handle(c net.Conn, dbFile string) {
-	db, err := handler.NewREPLContext(dbFile)
+	sqlEngine, err := engine.NewSQLEngine(dbFile)
 	if err != nil {
 		fmt.Printf("[Server/ReplCtx] Error: %v\n", err)
 	}
 
 	srv := server.NewDefaultServer()
-	conn, err := srv.NewConn(c, "root", "", &Handler{db})
+	conn, err := srv.NewConn(c, "root", "", &Handler{sqlEngine})
 	if err != nil {
 		fmt.Printf("[Server] Error: %v\n", err)
 	}

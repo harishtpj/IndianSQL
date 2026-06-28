@@ -2,90 +2,65 @@ package server
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
-	"github.com/harishtpj/indiansql/internal/handler"
+
+	"github.com/harishtpj/indiansql/internal/engine"
 	rowPackage "github.com/harishtpj/indiansql/internal/row"
 	"github.com/harishtpj/indiansql/internal/schema"
 )
 
 type Handler struct {
-	db *handler.REPLContext
+	engine *engine.SQLEngine
 }
 
-// HandleFieldList implements [server.Handler].
-func (h Handler) HandleFieldList(table string, fieldWildcard string) ([]*mysql.Field, error) {
-	panic("unimplemented")
-}
-
-// HandleOtherCommand implements [server.Handler].
-func (h Handler) HandleOtherCommand(cmd byte, data []byte) error {
-	panic("unimplemented")
-}
-
-// HandleStmtClose implements [server.Handler].
-func (h Handler) HandleStmtClose(context any) error {
-	panic("unimplemented")
-}
-
-// HandleStmtExecute implements [server.Handler].
-func (h Handler) HandleStmtExecute(context any, query string, args []any) (*mysql.Result, error) {
-	panic("unimplemented")
-}
-
-// HandleStmtPrepare implements [server.Handler].
-func (h Handler) HandleStmtPrepare(query string) (params int, columns int, context any, err error) {
-	panic("unimplemented")
-}
-
-// UseDB implements [server.Handler].
-func (h Handler) UseDB(dbName string) error {
-	panic("unimplemented")
+func NewHandler(engine *engine.SQLEngine) *Handler {
+	return &Handler{
+		engine: engine,
+	}
 }
 
 func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
-	cmd, args, _ := strings.Cut(query, " ")
-	cmd = strings.ToLower(strings.TrimSpace(cmd))
-	args = strings.TrimSpace(args)
+	result, err := h.engine.Execute(query)
+	if err != nil {
+		return nil, err
+	}
 
-	switch cmd {
-	case "select":
-		rows, err := h.db.ExecuteSelectAll(args)
-		if err != nil {
-			return nil, err
-		}
+	switch r := result.(type) {
 
-		table, err := h.db.GetTableInfo(args)
-		if err != nil {
-			return nil, err
-		}
+	case *engine.EmptyResult:
+		return &mysql.Result{}, nil
 
-		// Column names
-		columns := make([]string, len(table.Columns))
-		for i, col := range table.Columns {
+	case *engine.MessageResult:
+		// CREATE, INSERT, OPEN, etc.
+		return &mysql.Result{}, nil
+
+	case *engine.TableResult:
+		columns := make([]string, len(r.Table.Columns))
+		for i, col := range r.Table.Columns {
 			columns[i] = col.Name
 		}
 
-		// Row values
-		values := make([][]any, 0, len(rows))
-		for _, r := range rows {
-			row := make([]any, len(r.Values))
+		values := make([][]any, 0, len(r.Rows))
 
-			for i, v := range r.Values {
+		for _, row := range r.Rows {
+			vals := make([]any, len(row.Values))
+
+			for i, v := range row.Values {
 				switch (*v).Type() {
+
 				case schema.ColumnTypeNumeric:
-					row[i] = (*v).(*rowPackage.NumericValue).GetInt64()
+					vals[i] = (*v).(*rowPackage.NumericValue).GetInt64()
 
 				case schema.ColumnTypeVarchar:
-					row[i] = (*v).String()
+					vals[i] = (*v).String()
 
 				default:
-					row[i] = (*v).String()
+					vals[i] = (*v).String()
 				}
 			}
 
-			values = append(values, row)
+			values = append(values, vals)
 		}
 
 		rs, err := mysql.BuildSimpleResultset(columns, values, false)
@@ -97,7 +72,71 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 			Resultset: rs,
 		}, nil
 
+	case *engine.SchemaResult:
+		return nil, fmt.Errorf("SCHEMA is not supported over the MySQL protocol")
+
+	case *engine.TablesResult:
+		return nil, fmt.Errorf("TABLES is not supported over the MySQL protocol")
+
+	case *engine.ExitResult:
+		return &mysql.Result{}, nil
+
 	default:
-		return nil, fmt.Errorf("unknown command: %q", cmd)
+		return nil, fmt.Errorf("unknown engine result %T", result)
 	}
+}
+
+func (h *Handler) HandleFieldList(table string, fieldWildcard string) ([]*mysql.Field, error) {
+	res, err := h.engine.Execute("schema " + table)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaResult, ok := res.(*engine.SchemaResult)
+	if !ok {
+		return nil, fmt.Errorf("expected SchemaResult")
+	}
+
+	fields := make([]*mysql.Field, len(schemaResult.Table.Columns))
+
+	for i, col := range schemaResult.Table.Columns {
+		field := &mysql.Field{
+			Name: []byte(col.Name),
+		}
+
+		switch col.Type {
+		case schema.ColumnTypeNumeric:
+			field.Type = mysql.MYSQL_TYPE_LONG
+
+		case schema.ColumnTypeVarchar:
+			field.Type = mysql.MYSQL_TYPE_VARCHAR
+
+		default:
+			field.Type = mysql.MYSQL_TYPE_VAR_STRING
+		}
+
+		fields[i] = field
+	}
+
+	return fields, nil
+}
+
+func (h *Handler) HandleStmtPrepare(query string) (params int, columns int, context any, err error) {
+	return 0, 0, nil, fmt.Errorf("prepared statements are not supported")
+}
+
+func (h *Handler) HandleStmtExecute(context any, query string, args []any) (*mysql.Result, error) {
+	return nil, fmt.Errorf("prepared statements are not supported")
+}
+
+func (h *Handler) HandleStmtClose(context any) error {
+	return nil
+}
+
+func (h *Handler) HandleOtherCommand(cmd byte, data []byte) error {
+	return fmt.Errorf("unsupported command: %d", cmd)
+}
+
+func (h *Handler) UseDB(dbName string) error {
+	return nil
 }

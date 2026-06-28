@@ -1,4 +1,4 @@
-package handler
+package manager
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewREPLContext(t *testing.T) {
-	ctx, err := NewREPLContext(":memory:")
+	ctx, err := NewDBManager(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestNewREPLContext(t *testing.T) {
 }
 
 func TestExecuteCreateTable(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -57,7 +57,7 @@ func TestExecuteCreateTable(t *testing.T) {
 }
 
 func TestExecuteCreateTableDuplicate(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -74,7 +74,7 @@ func TestExecuteCreateTableDuplicate(t *testing.T) {
 }
 
 func TestExecuteInsert(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -95,7 +95,7 @@ func TestExecuteInsert(t *testing.T) {
 }
 
 func TestExecuteInsertInvalidTable(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	values := []row.Value{
@@ -109,7 +109,7 @@ func TestExecuteInsertInvalidTable(t *testing.T) {
 }
 
 func TestExecuteInsertWrongColumnCount(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -131,7 +131,7 @@ func TestExecuteInsertWrongColumnCount(t *testing.T) {
 }
 
 func TestExecuteSelectAll(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -161,7 +161,7 @@ func TestExecuteSelectAll(t *testing.T) {
 }
 
 func TestExecuteSelectAllEmpty(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -180,7 +180,7 @@ func TestExecuteSelectAllEmpty(t *testing.T) {
 }
 
 func TestExecuteSelectAllInvalidTable(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	_, err := ctx.ExecuteSelectAll("nonexistent")
@@ -190,7 +190,7 @@ func TestExecuteSelectAllInvalidTable(t *testing.T) {
 }
 
 func TestGetTableInfo(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	columns := []*schema.Column{
@@ -214,7 +214,7 @@ func TestGetTableInfo(t *testing.T) {
 }
 
 func TestCreateInsertSelectFlow(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 	defer ctx.Close()
 
 	// CREATE TABLE
@@ -267,7 +267,7 @@ func TestCreateInsertSelectFlow(t *testing.T) {
 }
 
 func TestContextClose(t *testing.T) {
-	ctx, _ := NewREPLContext(":memory:")
+	ctx, _ := NewDBManager(":memory:")
 
 	err := ctx.Close()
 	if err != nil {

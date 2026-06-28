@@ -1,4 +1,4 @@
-package handler
+package manager
 
 import (
 	"errors"
@@ -12,13 +12,13 @@ import (
 	"github.com/harishtpj/indiansql/internal/schema"
 )
 
-type REPLContext struct {
+type DBManager struct {
 	Pager   *pager.Pager
 	Catalog *schema.Catalog
 	Trees   map[string]*btree.BTree
 }
 
-func NewREPLContext(dbFile string) (*REPLContext, error) {
+func NewDBManager(dbFile string) (*DBManager, error) {
 	pgr, err := pager.Open(dbFile)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func NewREPLContext(dbFile string) (*REPLContext, error) {
 		}
 		pg.Dirty = true
 
-		return &REPLContext{
+		return &DBManager{
 			Pager:   pgr,
 			Catalog: cat,
 			Trees:   make(map[string]*btree.BTree),
@@ -63,14 +63,14 @@ func NewREPLContext(dbFile string) (*REPLContext, error) {
 		trees[table.Name] = btree.NewTree(pgr, table.RootPageID)
 	}
 
-	return &REPLContext{
+	return &DBManager{
 		Pager:   pgr,
 		Catalog: cat,
 		Trees:   trees,
 	}, nil
 }
 
-func (rc *REPLContext) ExecuteCreateTable(tableName string, columns []*schema.Column) error {
+func (rc *DBManager) ExecuteCreateTable(tableName string, columns []*schema.Column) error {
 	if rc.Catalog.TableExists(tableName) {
 		return errors.New("Table already exists: " + tableName)
 	}
@@ -93,13 +93,15 @@ func (rc *REPLContext) ExecuteCreateTable(tableName string, columns []*schema.Co
 		return err
 	}
 
-	rc.Pager.SaveCatalog(rc.Catalog)
+	if err := rc.Pager.SaveCatalog(rc.Catalog); err != nil {
+		return err
+	}
 	rc.Trees[tableName] = btree.NewTree(rc.Pager, table.RootPageID)
 	pg.Dirty = true
 	return nil
 }
 
-func (rc *REPLContext) ExecuteInsert(tableName string, values []row.Value) error {
+func (rc *DBManager) ExecuteInsert(tableName string, values []row.Value) error {
 	if !rc.Catalog.TableExists(tableName) {
 		return errors.New("Table doesn't exist: " + tableName)
 	}
@@ -136,7 +138,7 @@ func (rc *REPLContext) ExecuteInsert(tableName string, values []row.Value) error
 	return rc.Trees[tableName].Insert(pk, rawRow)
 }
 
-func (rc *REPLContext) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
+func (rc *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
 	if !rc.Catalog.TableExists(tableName) {
 		return nil, errors.New("Table doesn't exist: " + tableName)
 	}
@@ -169,7 +171,7 @@ func (rc *REPLContext) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
 	return rows, nil
 }
 
-func (rc *REPLContext) Close() error {
+func (rc *DBManager) Close() error {
 	if err := rc.Pager.SaveCatalog(rc.Catalog); err != nil {
 		return err
 	}
@@ -181,6 +183,6 @@ func (rc *REPLContext) Close() error {
 	return nil
 }
 
-func (rc *REPLContext) GetTableInfo(tableName string) (*schema.Table, error) {
+func (rc *DBManager) GetTableInfo(tableName string) (*schema.Table, error) {
 	return rc.Catalog.GetTable(tableName), nil
 }

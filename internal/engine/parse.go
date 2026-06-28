@@ -1,4 +1,4 @@
-package cli
+package engine
 
 import (
 	"fmt"
@@ -86,7 +86,7 @@ func parseInsertValues(table *schema.Table, vals []string) ([]row.Value, error) 
 	return values, nil
 }
 
-func printRows(table *schema.Table, rows []*row.Row) {
+func PrintRows(table *schema.Table, rows []*row.Row) {
 	for _, col := range table.Columns {
 		fmt.Printf("%-20s", col.Name)
 	}
