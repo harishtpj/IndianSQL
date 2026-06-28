@@ -19,7 +19,8 @@ const (
 	freeListCountOffset = freeListHeadOffset + 4
 	rootPageOffset      = freeListCountOffset + 4
 	reservedOffset      = rootPageOffset + 4
-	reservedSize        = 54
+	DBHeaderSize        = 100
+	reservedSize        = DBHeaderSize - reservedOffset
 )
 
 type DBHeader struct {
