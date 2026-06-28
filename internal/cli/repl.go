@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/harishtpj/indiansql/internal/consts"
+	"github.com/harishtpj/indiansql/internal/handler"
 )
 
 func printBanner() {
@@ -28,7 +29,7 @@ func getInput() (cmd string, args string) {
 func repl(dbFile string) {
 	printBanner()
 
-	db, err := NewREPLContext(dbFile)
+	db, err := handler.NewREPLContext(dbFile)
 
 	for {
 		printPrompt()
@@ -57,7 +58,7 @@ func repl(dbFile string) {
 				_ = db.Close()
 			}
 
-			db, err = NewREPLContext(args)
+			db, err = handler.NewREPLContext(args)
 			if err == nil {
 				fmt.Println("Database opened.")
 			}
