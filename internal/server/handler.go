@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
 
@@ -12,11 +13,13 @@ import (
 
 type Handler struct {
 	engine *engine.SQLEngine
+	dbName string
 }
 
 func NewHandler(engine *engine.SQLEngine) *Handler {
 	return &Handler{
 		engine: engine,
+		dbName: "indiansql",
 	}
 }
 
@@ -34,6 +37,12 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 	case *engine.MessageResult:
 		// CREATE, INSERT, OPEN, etc.
 		return &mysql.Result{}, nil
+
+	case *engine.TablesResult:
+		return buildTablesResult(r.Tables, h.dbName)
+
+	case *engine.SchemaResult:
+		return buildSchemaResult(r.Table)
 
 	case *engine.TableResult:
 		columns := make([]string, len(r.Table.Columns))
@@ -71,12 +80,6 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 		return &mysql.Result{
 			Resultset: rs,
 		}, nil
-
-	case *engine.SchemaResult:
-		return nil, fmt.Errorf("SCHEMA is not supported over the MySQL protocol")
-
-	case *engine.TablesResult:
-		return nil, fmt.Errorf("TABLES is not supported over the MySQL protocol")
 
 	case *engine.ExitResult:
 		return &mysql.Result{}, nil
@@ -138,5 +141,68 @@ func (h *Handler) HandleOtherCommand(cmd byte, data []byte) error {
 }
 
 func (h *Handler) UseDB(dbName string) error {
+	if dbName != "" {
+		h.dbName = dbName
+	}
 	return nil
+}
+
+func buildTablesResult(tables []*schema.Table, dbName string) (*mysql.Result, error) {
+	columnName := "Tables"
+	if dbName != "" {
+		columnName = "Tables_in_" + dbName
+	}
+
+	values := make([][]any, 0, len(tables))
+	for _, table := range tables {
+		values = append(values, []any{table.Name})
+	}
+
+	rs, err := mysql.BuildSimpleResultset([]string{columnName}, values, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mysql.Result{Resultset: rs}, nil
+}
+
+func buildSchemaResult(table *schema.Table) (*mysql.Result, error) {
+	columns := []string{"Field", "Type", "Null", "Key", "Default", "Extra"}
+	values := make([][]any, 0, len(table.Columns))
+
+	for _, col := range table.Columns {
+		nullability := "YES"
+		key := ""
+		if col.IsPrimaryKey {
+			nullability = "NO"
+			key = "PRI"
+		}
+
+		values = append(values, []any{
+			col.Name,
+			mysqlTypeName(col.Type),
+			nullability,
+			key,
+			nil,
+			"",
+		})
+	}
+
+	rs, err := mysql.BuildSimpleResultset(columns, values, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mysql.Result{Resultset: rs}, nil
+}
+
+func mysqlTypeName(colType schema.ColumnType) string {
+	switch colType {
+	case schema.ColumnTypeNumeric:
+		return "BIGINT"
+	case schema.ColumnTypeVarchar:
+		return "VARCHAR"
+	default:
+		return strings.ToUpper(colType.String())
+	}
 }

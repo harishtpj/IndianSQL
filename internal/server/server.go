@@ -38,7 +38,7 @@ func (s *Server) handle(c net.Conn, dbFile string) {
 	}
 
 	srv := server.NewDefaultServer()
-	conn, err := srv.NewConn(c, "root", "", &Handler{sqlEngine})
+	conn, err := srv.NewConn(c, "root", "", NewHandler(sqlEngine))
 	if err != nil {
 		fmt.Printf("[Server] Error: %v\n", err)
 	}

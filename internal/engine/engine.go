@@ -18,6 +18,9 @@ func NewSQLEngine(dbFile string) (*SQLEngine, error) {
 }
 
 func (engine *SQLEngine) Execute(query string) (Result, error) {
+	query = strings.TrimSpace(query)
+	query = strings.TrimSuffix(query, ";")
+
 	cmd, args, _ := strings.Cut(query, " ")
 	cmd = strings.ToLower(strings.TrimSpace(cmd))
 	args = strings.TrimSpace(args)
@@ -131,6 +134,49 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 	case "tables":
 		return &TablesResult{
 			Tables: engine.db.Catalog.ListTables(),
+		}, nil
+
+	case "show":
+		fields := strings.Fields(args)
+		if len(fields) == 0 {
+			return nil, errors.New("usage: show tables|columns from <table>")
+		}
+
+		switch strings.ToLower(fields[0]) {
+		case "tables":
+			return &TablesResult{
+				Tables: engine.db.Catalog.ListTables(),
+			}, nil
+
+		case "columns", "fields":
+			if len(fields) < 3 {
+				return nil, errors.New("usage: show columns from <table>")
+			}
+			if !strings.EqualFold(fields[1], "from") && !strings.EqualFold(fields[1], "in") {
+				return nil, errors.New("usage: show columns from <table>")
+			}
+			table, err := engine.db.GetTableInfo(fields[2])
+			if err != nil {
+				return nil, err
+			}
+			return &SchemaResult{Table: table}, nil
+		default:
+			return nil, fmt.Errorf("unknown show command: %q", fields[0])
+		}
+
+	case "desc", "describe":
+		fields := strings.Fields(args)
+		if len(fields) < 1 {
+			return nil, errors.New("usage: desc <table>")
+		}
+
+		table, err := engine.db.GetTableInfo(fields[0])
+		if err != nil {
+			return nil, err
+		}
+
+		return &SchemaResult{
+			Table: table,
 		}, nil
 
 	case "exit", "quit":
