@@ -102,7 +102,7 @@ func (t *Table) String() string {
 	var repr strings.Builder
 	fmt.Fprintf(&repr, "Table: %s(", t.Name)
 	for i, col := range t.Columns {
-		fmt.Fprint(&repr, col.Name, col.Type.String())
+		fmt.Fprint(&repr, col.Name, " ", col.Type.String())
 		if i == t.PrimaryKeyIndex {
 			repr.WriteString(" PRIMARY KEY")
 		}

@@ -39,6 +39,7 @@ func NewREPLContext(dbFile string) (*REPLContext, error) {
 		if err != nil {
 			return nil, err
 		}
+		pg.Dirty = true
 
 		return &REPLContext{
 			Pager:   pgr,
@@ -94,6 +95,7 @@ func (rc *REPLContext) ExecuteCreateTable(tableName string, columns []*schema.Co
 
 	rc.Pager.SaveCatalog(rc.Catalog)
 	rc.Trees[tableName] = btree.NewTree(rc.Pager, table.RootPageID)
+	pg.Dirty = true
 	return nil
 }
 

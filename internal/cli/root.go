@@ -10,11 +10,17 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   consts.AppName,
+	Use:   consts.AppName + " [dbfile]",
 	Short: consts.Desc,
 	Long:  `A minimal file-based DBMS engine with built-in server support.`,
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		repl()
+		dbFile := ":memory:"
+		if len(args) == 1 {
+			dbFile = args[0]
+		}
+
+		repl(dbFile)
 	},
 }
 
