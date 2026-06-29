@@ -6,6 +6,7 @@ const (
 	ColumnTypeInteger ColumnType = iota
 	ColumnTypeVarchar
 	ColumnTypeBoolean
+	ColumnTypeNumeric
 	MaxColumnType
 )
 
@@ -17,6 +18,8 @@ func (ct ColumnType) String() string {
 		return "VARCHAR"
 	case ColumnTypeBoolean:
 		return "BOOLEAN"
+	case ColumnTypeNumeric:
+		return "NUMERIC"
 	default:
 		return "UNKNOWN"
 	}

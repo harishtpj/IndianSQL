@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/harishtpj/indiansql/internal/schema"
 )
@@ -78,6 +79,12 @@ func (d *Decoder) decodeValues(encoded []byte, tbl *schema.Table) ([]Value, erro
 				values[i] = NewNullBoolValue()
 			} else {
 				values[i] = NewBoolValue((encoded[offset] & (1 << 1)) != 0)
+			}
+		case schema.ColumnTypeNumeric:
+			if encoded[offset] == 1 {
+				values[i] = NewNullNumericValue()
+			} else {
+				values[i] = NewNumericValue(math.Float64frombits(binary.BigEndian.Uint64(encoded[offset+1:])))
 			}
 		default:
 			return nil, errors.New("invalid type supplied for schema")

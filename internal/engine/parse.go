@@ -30,6 +30,8 @@ func parseCreateColumns(cols []string) ([]*schema.Column, error) {
 			col.Type = schema.ColumnTypeVarchar
 		case "boolean", "bool":
 			col.Type = schema.ColumnTypeBoolean
+		case "numeric", "num", "float":
+			col.Type = schema.ColumnTypeNumeric
 
 		default:
 			return nil, fmt.Errorf("unknown type %q", parts[1])
@@ -78,6 +80,16 @@ func parseInsertValues(table *schema.Table, vals []string) ([]row.Value, error) 
 
 		case schema.ColumnTypeBoolean:
 			values = append(values, row.NewBoolValue(str == "TRUE" || str == "true"))
+
+		case schema.ColumnTypeNumeric:
+			n, err := strconv.ParseFloat(str, 64)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"column %q expects NUMERIC",
+					table.Columns[i].Name,
+				)
+			}
+			values = append(values, row.NewNumericValue(n))
 
 		default:
 			return nil, fmt.Errorf(

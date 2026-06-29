@@ -65,6 +65,9 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 				case schema.ColumnTypeBoolean:
 					vals[i] = (*v).(*rowPackage.BoolValue).GetInt()
 
+				case schema.ColumnTypeNumeric:
+					vals[i] = (*v).(*rowPackage.NumericValue).GetFloat()
+
 				default:
 					vals[i] = (*v).String()
 				}
@@ -117,6 +120,9 @@ func (h *Handler) HandleFieldList(table string, fieldWildcard string) ([]*mysql.
 
 		case schema.ColumnTypeBoolean:
 			field.Type = mysql.MYSQL_TYPE_TINY
+
+		case schema.ColumnTypeNumeric:
+			field.Type = mysql.MYSQL_TYPE_DOUBLE
 
 		default:
 			field.Type = mysql.MYSQL_TYPE_VAR_STRING
@@ -208,6 +214,8 @@ func mysqlTypeName(colType schema.ColumnType) string {
 		return "VARCHAR"
 	case schema.ColumnTypeBoolean:
 		return "BOOLEAN"
+	case schema.ColumnTypeNumeric:
+		return "NUMERIC"
 	default:
 		return strings.ToUpper(colType.String())
 	}
