@@ -1,3 +1,4 @@
 *.exe
 *.idb
 .idea
+*.yml
