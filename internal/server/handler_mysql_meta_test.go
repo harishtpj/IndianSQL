@@ -13,7 +13,7 @@ func TestHandleQueryShowTables(t *testing.T) {
 	}
 	defer func() { _, _ = e.Execute("exit") }()
 
-	if _, err := e.Execute("create users id:numeric:pk name:varchar"); err != nil {
+	if _, err := e.Execute("create table users (id int primary key, name varchar)"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -32,8 +32,8 @@ func TestHandleQueryShowTables(t *testing.T) {
 	if got := len(res.Resultset.RowDatas); got != 1 {
 		t.Fatalf("row count = %d, want 1", got)
 	}
-	if got := string(res.Resultset.Fields[0].Name); got != "Tables_in_indiansql" {
-		t.Fatalf("column name = %v, want Tables_in_indiansql", got)
+	if got := string(res.Resultset.Fields[0].Name); got != "Tables_in_:memory:" {
+		t.Fatalf("column name = %v, want Tables_in_:memory:", got)
 	}
 }
 
@@ -44,7 +44,7 @@ func TestHandleQueryDesc(t *testing.T) {
 	}
 	defer func() { _, _ = e.Execute("exit") }()
 
-	if _, err := e.Execute("create users id:numeric:pk name:varchar"); err != nil {
+	if _, err := e.Execute("create table users (id int primary key, name varchar)"); err != nil {
 		t.Fatal(err)
 	}
 

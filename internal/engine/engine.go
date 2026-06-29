@@ -3,9 +3,13 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/harishtpj/indiansql/internal/manager"
+	"github.com/harishtpj/indiansql/internal/row"
+	"github.com/harishtpj/indiansql/internal/schema"
+	"github.com/xwb1989/sqlparser"
 )
 
 type SQLEngine struct {
@@ -27,7 +31,6 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 	args = strings.TrimSpace(args)
 
 	switch cmd {
-
 	case "":
 		return &EmptyResult{}, nil
 
@@ -35,9 +38,9 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 		return &MessageResult{
 			Message: `Commands:
   open <database>
-  create <table> <col:type[:pk]> ...
-  insert <table> <values...>
-  select <table>
+  create table <table> (col type [primary key], ...)
+  insert into <table> values (...)
+  select * from <table>
   schema <table>
   tables
   exit`,
@@ -59,69 +62,6 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			Message: "Database opened.",
 		}, nil
 
-	case "create":
-		fields := strings.Fields(args)
-		if len(fields) < 2 {
-			return nil, errors.New("usage: create <table> <col:type[:pk]> ...")
-		}
-
-		tableName := fields[0]
-
-		columns, err := parseCreateColumns(fields[1:])
-		if err != nil {
-			return nil, err
-		}
-
-		if err := engine.db.ExecuteCreateTable(tableName, columns); err != nil {
-			return nil, err
-		}
-
-		return &MessageResult{
-			Message: "Table created.",
-		}, nil
-
-	case "insert":
-		fields := strings.Fields(args)
-		if len(fields) < 2 {
-			return nil, errors.New("usage: insert <table> <values...>")
-		}
-
-		tableName := fields[0]
-
-		table, err := engine.db.GetTableInfo(tableName)
-		if err != nil {
-			return nil, err
-		}
-
-		values, err := parseInsertValues(table, fields[1:])
-		if err != nil {
-			return nil, err
-		}
-
-		if err := engine.db.ExecuteInsert(tableName, values); err != nil {
-			return nil, err
-		}
-
-		return &MessageResult{
-			Message: "1 row inserted.",
-		}, nil
-
-	case "select":
-		rows, err := engine.db.ExecuteSelectAll(args)
-		if err != nil {
-			return nil, err
-		}
-
-		table, err := engine.db.GetTableInfo(args)
-		if err != nil {
-			return nil, err
-		}
-
-		return &TableResult{
-			Table: table,
-			Rows:  rows,
-		}, nil
-
 	case "schema":
 		table, err := engine.db.GetTableInfo(args)
 		if err != nil {
@@ -135,6 +75,21 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 	case "tables":
 		return &TablesResult{
 			Tables: engine.db.Catalog.ListTables(),
+		}, nil
+
+	case "desc", "describe":
+		fields := strings.Fields(args)
+		if len(fields) < 1 {
+			return nil, errors.New("usage: desc <table>")
+		}
+
+		table, err := engine.db.GetTableInfo(fields[0])
+		if err != nil {
+			return nil, err
+		}
+
+		return &SchemaResult{
+			Table: table,
 		}, nil
 
 	case "show":
@@ -165,30 +120,173 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			return nil, fmt.Errorf("unknown show command: %q", fields[0])
 		}
 
-	case "desc", "describe":
-		fields := strings.Fields(args)
-		if len(fields) < 1 {
-			return nil, errors.New("usage: desc <table>")
-		}
-
-		table, err := engine.db.GetTableInfo(fields[0])
-		if err != nil {
-			return nil, err
-		}
-
-		return &SchemaResult{
-			Table: table,
-		}, nil
-
 	case "exit", "quit":
 		if engine.db != nil {
 			_ = engine.db.Close()
 		}
 
 		return &ExitResult{}, nil
+	}
+
+	stmt, err := sqlparser.Parse(query)
+	if err != nil {
+		return nil, err
+	}
+
+	switch stmt := stmt.(type) {
+	case *sqlparser.DDL:
+		if stmt.Action == "create" {
+			tableName := stmt.NewName.Name.String()
+			columns := make([]*schema.Column, 0, len(stmt.TableSpec.Columns))
+
+			for _, colDef := range stmt.TableSpec.Columns {
+				col := &schema.Column{
+					Name: colDef.Name.String(),
+				}
+
+				switch strings.ToLower(colDef.Type.Type) {
+				case "int", "integer":
+					col.Type = schema.ColumnTypeInteger
+				case "varchar", "text", "string":
+					col.Type = schema.ColumnTypeVarchar
+				case "boolean", "bool":
+					col.Type = schema.ColumnTypeBoolean
+				case "numeric", "num", "float":
+					col.Type = schema.ColumnTypeNumeric
+				default:
+					return nil, fmt.Errorf("unknown type %q", colDef.Type.Type)
+				}
+
+				if colDef.Type.KeyOpt == 1 {
+					col.IsPrimaryKey = true
+				}
+
+				columns = append(columns, col)
+			}
+
+			if err := engine.db.ExecuteCreateTable(tableName, columns); err != nil {
+				return nil, err
+			}
+
+			return &MessageResult{
+				Message: "Table created.",
+			}, nil
+		}
+		return nil, fmt.Errorf("unsupported DDL action")
+
+	case *sqlparser.Insert:
+		tableName := stmt.Table.Name.String()
+		table, err := engine.db.GetTableInfo(tableName)
+		if err != nil {
+			return nil, err
+		}
+
+		rows, ok := stmt.Rows.(sqlparser.Values)
+		if !ok || len(rows) != 1 {
+			return nil, errors.New("insert must have exactly one row of values")
+		}
+
+		vals := rows[0]
+		if len(vals) != table.ColumnCount() {
+			return nil, fmt.Errorf(
+				"expected %d values, got %d",
+				table.ColumnCount(),
+				len(vals),
+			)
+		}
+
+		values := make([]row.Value, 0, len(vals))
+
+		for i, valExpr := range vals {
+			switch val := valExpr.(type) {
+			case *sqlparser.SQLVal:
+				strVal := string(val.Val)
+				switch table.Columns[i].Type {
+				case schema.ColumnTypeInteger:
+					n, err := strconv.ParseInt(strVal, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf(
+							"column %q expects INTEGER",
+							table.Columns[i].Name,
+						)
+					}
+					values = append(values, row.NewIntegerValue(n))
+				case schema.ColumnTypeVarchar:
+					values = append(values, row.NewVarcharValue(strVal))
+				case schema.ColumnTypeNumeric:
+					n, err := strconv.ParseFloat(strVal, 64)
+					if err != nil {
+						return nil, fmt.Errorf(
+							"column %q expects NUMERIC",
+							table.Columns[i].Name,
+						)
+					}
+					values = append(values, row.NewNumericValue(n))
+				case schema.ColumnTypeBoolean:
+					values = append(values, row.NewBoolValue(strings.EqualFold(strVal, "TRUE") || strVal == "1"))
+				default:
+					return nil, fmt.Errorf(
+						"unsupported datatype for column %q",
+						table.Columns[i].Name,
+					)
+				}
+			case sqlparser.BoolVal:
+				if table.Columns[i].Type != schema.ColumnTypeBoolean {
+					return nil, fmt.Errorf(
+						"column %q expects BOOLEAN",
+						table.Columns[i].Name,
+					)
+				}
+				values = append(values, row.NewBoolValue(bool(val)))
+			default:
+				return nil, fmt.Errorf(
+					"unsupported value expression for column %q",
+					table.Columns[i].Name,
+				)
+			}
+		}
+
+		if err := engine.db.ExecuteInsert(tableName, values); err != nil {
+			return nil, err
+		}
+
+		return &MessageResult{
+			Message: "1 row inserted.",
+		}, nil
+
+	case *sqlparser.Select:
+		if len(stmt.From) != 1 {
+			return nil, errors.New("select must have exactly one table")
+		}
+
+		var tableName string
+		if aliased, ok := stmt.From[0].(*sqlparser.AliasedTableExpr); ok {
+			if table, ok := aliased.Expr.(sqlparser.TableName); ok {
+				tableName = table.Name.String()
+			}
+		}
+
+		if tableName == "" {
+			return nil, errors.New("unsupported select from clause")
+		}
+
+		dbRows, err := engine.db.ExecuteSelectAll(tableName)
+		if err != nil {
+			return nil, err
+		}
+
+		table, err := engine.db.GetTableInfo(tableName)
+		if err != nil {
+			return nil, err
+		}
+
+		return &TableResult{
+			Table: table,
+			Rows:  dbRows,
+		}, nil
 
 	default:
-		return nil, fmt.Errorf("unknown command: %q", cmd)
+		return nil, fmt.Errorf("unknown statement type")
 	}
 }
 
@@ -204,3 +302,4 @@ func (engine *SQLEngine) CommitDB() error {
 func (engine *SQLEngine) GetDBName() string {
 	return engine.dbFile
 }
+

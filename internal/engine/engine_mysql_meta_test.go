@@ -9,7 +9,7 @@ func TestExecuteMySQLShowTables(t *testing.T) {
 	}
 	defer e.db.Close()
 
-	if _, err := e.Execute("create users id:numeric:pk name:varchar"); err != nil {
+	if _, err := e.Execute("create table users (id int primary key, name varchar)"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -34,7 +34,7 @@ func TestExecuteMySQLDescAndShowColumns(t *testing.T) {
 	}
 	defer e.db.Close()
 
-	if _, err := e.Execute("create users id:numeric:pk name:varchar"); err != nil {
+	if _, err := e.Execute("create table users (id int primary key, name varchar)"); err != nil {
 		t.Fatal(err)
 	}
 
