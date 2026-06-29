@@ -54,13 +54,13 @@ func (r *Row) PrimaryKeyAsInt64() (int64, error) {
 		return 0, err
 	}
 
-	if pkVal.Type() != schema.ColumnTypeNumeric {
-		return 0, fmt.Errorf("expected numeric primary key, got %v", pkVal.Type())
+	if pkVal.Type() != schema.ColumnTypeInteger {
+		return 0, fmt.Errorf("expected integer primary key, got %v", pkVal.Type())
 	}
 
-	val, ok := pkVal.(*NumericValue)
+	val, ok := pkVal.(*IntegerValue)
 	if !ok {
-		return 0, errors.New("primary key is not numeric")
+		return 0, errors.New("primary key is not integer")
 	}
 
 	return val.GetInt64(), nil

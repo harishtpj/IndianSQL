@@ -24,6 +24,9 @@ func NewTable(name string, columns []*Column) (*Table, error) {
 
 	for idx, val := range columns {
 		if val.IsPrimaryKey {
+			if val.Type != ColumnTypeInteger {
+				return nil, errors.New(fmt.Sprintf("Column '%s' is not a primary key type", val.Name))
+			}
 			tab.PrimaryKeyIndex = idx
 		}
 	}
@@ -53,6 +56,8 @@ func (t *Table) Validate() error {
 		if col.IsPrimaryKey {
 			if hasPK {
 				return errors.New("table already has a Primary Key")
+			} else if col.Type != ColumnTypeInteger {
+				return errors.New("column is not of primary key type")
 			} else if i != t.PrimaryKeyIndex {
 				return errors.New("table's primary key index mismatch")
 			} else {
@@ -126,7 +131,7 @@ func (t *Table) Serialize() ([]byte, error) {
 		}
 		buf = append(buf, colBuf...)
 	}
-	buf = binary.BigEndian.AppendUint32(buf, uint32(t.RootPageID))
+	buf = binary.BigEndian.AppendUint32(buf, t.RootPageID)
 	return buf, nil
 }
 

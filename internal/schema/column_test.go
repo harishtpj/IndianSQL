@@ -12,9 +12,9 @@ func TestColumnTypeString(t *testing.T) {
 		expectedStr string
 	}{
 		{
-			name:        "NUMERIC type",
-			colType:     ColumnTypeNumeric,
-			expectedStr: "NUMERIC",
+			name:        "INTEGER type",
+			colType:     ColumnTypeInteger,
+			expectedStr: "INTEGER",
 		},
 		{
 			name:        "VARCHAR type",
@@ -41,8 +41,8 @@ func TestColumnTypeIsValid(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "NUMERIC is valid",
-			colType:  ColumnTypeNumeric,
+			name:     "INTEGER is valid",
+			colType:  ColumnTypeInteger,
 			expected: true,
 		},
 		{
@@ -83,9 +83,9 @@ func TestNewColumn(t *testing.T) {
 		errMsg    string
 	}{
 		{
-			name:      "Valid NUMERIC column",
+			name:      "Valid INTEGER column",
 			colName:   "id",
-			colType:   ColumnTypeNumeric,
+			colType:   ColumnTypeInteger,
 			isPK:      true,
 			shouldErr: false,
 		},
@@ -99,7 +99,7 @@ func TestNewColumn(t *testing.T) {
 		{
 			name:      "Empty column name should error",
 			colName:   "",
-			colType:   ColumnTypeNumeric,
+			colType:   ColumnTypeInteger,
 			isPK:      false,
 			shouldErr: true,
 			errMsg:    "name",
@@ -143,10 +143,10 @@ func TestColumnValidate(t *testing.T) {
 		shouldErr bool
 	}{
 		{
-			name: "Valid NUMERIC column",
+			name: "Valid INTEGER column",
 			column: &Column{
 				Name:         "id",
-				Type:         ColumnTypeNumeric,
+				Type:         ColumnTypeInteger,
 				IsPrimaryKey: true,
 			},
 			shouldErr: false,
@@ -164,7 +164,7 @@ func TestColumnValidate(t *testing.T) {
 			name: "Empty name should error",
 			column: &Column{
 				Name:         "",
-				Type:         ColumnTypeNumeric,
+				Type:         ColumnTypeInteger,
 				IsPrimaryKey: false,
 			},
 			shouldErr: true,

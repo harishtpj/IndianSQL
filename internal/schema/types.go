@@ -3,17 +3,20 @@ package schema
 type ColumnType uint8
 
 const (
-	ColumnTypeNumeric ColumnType = iota
+	ColumnTypeInteger ColumnType = iota
 	ColumnTypeVarchar
+	ColumnTypeBoolean
 	MaxColumnType
 )
 
 func (ct ColumnType) String() string {
 	switch ct {
-	case ColumnTypeNumeric:
-		return "NUMERIC"
+	case ColumnTypeInteger:
+		return "INTEGER"
 	case ColumnTypeVarchar:
 		return "VARCHAR"
+	case ColumnTypeBoolean:
+		return "BOOLEAN"
 	default:
 		return "UNKNOWN"
 	}

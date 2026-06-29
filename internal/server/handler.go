@@ -13,13 +13,11 @@ import (
 
 type Handler struct {
 	engine *engine.SQLEngine
-	dbName string
 }
 
 func NewHandler(engine *engine.SQLEngine) *Handler {
 	return &Handler{
 		engine: engine,
-		dbName: "indiansql",
 	}
 }
 
@@ -39,7 +37,7 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 		return &mysql.Result{}, nil
 
 	case *engine.TablesResult:
-		return buildTablesResult(r.Tables, h.dbName)
+		return buildTablesResult(r.Tables, h.engine.GetDBName())
 
 	case *engine.SchemaResult:
 		return buildSchemaResult(r.Table)
@@ -58,11 +56,14 @@ func (h *Handler) HandleQuery(query string) (*mysql.Result, error) {
 			for i, v := range row.Values {
 				switch (*v).Type() {
 
-				case schema.ColumnTypeNumeric:
-					vals[i] = (*v).(*rowPackage.NumericValue).GetInt64()
+				case schema.ColumnTypeInteger:
+					vals[i] = (*v).(*rowPackage.IntegerValue).GetInt64()
 
 				case schema.ColumnTypeVarchar:
 					vals[i] = (*v).String()
+
+				case schema.ColumnTypeBoolean:
+					vals[i] = (*v).(*rowPackage.BoolValue).GetInt()
 
 				default:
 					vals[i] = (*v).String()
@@ -108,11 +109,14 @@ func (h *Handler) HandleFieldList(table string, fieldWildcard string) ([]*mysql.
 		}
 
 		switch col.Type {
-		case schema.ColumnTypeNumeric:
+		case schema.ColumnTypeInteger:
 			field.Type = mysql.MYSQL_TYPE_LONG
 
 		case schema.ColumnTypeVarchar:
 			field.Type = mysql.MYSQL_TYPE_VARCHAR
+
+		case schema.ColumnTypeBoolean:
+			field.Type = mysql.MYSQL_TYPE_TINY
 
 		default:
 			field.Type = mysql.MYSQL_TYPE_VAR_STRING
@@ -133,7 +137,7 @@ func (h *Handler) HandleStmtExecute(context any, query string, args []any) (*mys
 }
 
 func (h *Handler) HandleStmtClose(context any) error {
-	return nil
+	return h.engine.CommitDB()
 }
 
 func (h *Handler) HandleOtherCommand(cmd byte, data []byte) error {
@@ -141,9 +145,9 @@ func (h *Handler) HandleOtherCommand(cmd byte, data []byte) error {
 }
 
 func (h *Handler) UseDB(dbName string) error {
-	if dbName != "" {
-		h.dbName = dbName
-	}
+	//if dbName != "" {
+	//	h.dbName = dbName
+	//}
 	return nil
 }
 
@@ -198,10 +202,12 @@ func buildSchemaResult(table *schema.Table) (*mysql.Result, error) {
 
 func mysqlTypeName(colType schema.ColumnType) string {
 	switch colType {
-	case schema.ColumnTypeNumeric:
+	case schema.ColumnTypeInteger:
 		return "BIGINT"
 	case schema.ColumnTypeVarchar:
 		return "VARCHAR"
+	case schema.ColumnTypeBoolean:
+		return "BOOLEAN"
 	default:
 		return strings.ToUpper(colType.String())
 	}

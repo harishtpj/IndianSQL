@@ -61,17 +61,23 @@ func (d *Decoder) decodeValues(encoded []byte, tbl *schema.Table) ([]Value, erro
 			)
 		}
 		switch vType {
-		case schema.ColumnTypeNumeric:
+		case schema.ColumnTypeInteger:
 			if encoded[offset] == 1 { // IsNull Check
-				values[i] = NewNullNumericValue()
+				values[i] = NewNullIntegerValue()
 			} else {
-				values[i] = NewNumericValue(int64(binary.BigEndian.Uint64(encoded[offset+1:])))
+				values[i] = NewIntegerValue(int64(binary.BigEndian.Uint64(encoded[offset+1:])))
 			}
 		case schema.ColumnTypeVarchar:
 			if encoded[offset] == 1 {
 				values[i] = NewNullVarcharValue()
 			} else {
 				values[i] = NewVarcharValue(string(encoded[offset+1 : offset+byteLen]))
+			}
+		case schema.ColumnTypeBoolean:
+			if (encoded[offset] & (1 << 0)) != 0 {
+				values[i] = NewNullBoolValue()
+			} else {
+				values[i] = NewBoolValue((encoded[offset] & (1 << 1)) != 0)
 			}
 		default:
 			return nil, errors.New("invalid type supplied for schema")

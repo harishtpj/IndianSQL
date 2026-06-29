@@ -15,7 +15,7 @@ func TestLoadSaveCatalog(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "users",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
@@ -65,7 +65,7 @@ func TestInitCatalog(t *testing.T) {
 	// Should be able to create tables
 	tbl := &schema.Table{
 		Name:            "test",
-		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true}},
+		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true}},
 		PrimaryKeyIndex: 0,
 		RootPageID:      1,
 	}
@@ -85,7 +85,7 @@ func TestCatalogPersistence(t *testing.T) {
 	cat1 := schema.NewCatalog()
 	tbl := &schema.Table{
 		Name:            "products",
-		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true}},
+		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true}},
 		PrimaryKeyIndex: 0,
 		RootPageID:      1,
 	}
@@ -102,7 +102,7 @@ func TestCatalogPersistence(t *testing.T) {
 	cat2 := schema.NewCatalog()
 	tbl2 := &schema.Table{
 		Name:            "orders",
-		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true}},
+		Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true}},
 		PrimaryKeyIndex: 0,
 		RootPageID:      2,
 	}
@@ -134,7 +134,7 @@ func TestCatalogMultipleTables(t *testing.T) {
 	for _, tt := range tables {
 		tbl := &schema.Table{
 			Name:            tt.name,
-			Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true}},
+			Columns:         []*schema.Column{{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true}},
 			PrimaryKeyIndex: 0,
 			RootPageID:      tt.rootPageID,
 		}

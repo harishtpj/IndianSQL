@@ -11,14 +11,14 @@ func TestEncodeRow(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "users",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	row, _ := NewRow([]Value{
-		NewNumericValue(42),
+		NewIntegerValue(42),
 		NewVarcharValue("Alice"),
 	}, tbl)
 
@@ -41,8 +41,8 @@ func TestEncodeRowVariousValues(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
-			{Name: "value", Type: schema.ColumnTypeNumeric, IsPrimaryKey: false},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
+			{Name: "value", Type: schema.ColumnTypeInteger, IsPrimaryKey: false},
 			{Name: "text", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
@@ -63,8 +63,8 @@ func TestEncodeRowVariousValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			row, _ := NewRow([]Value{
-				NewNumericValue(tt.pk),
-				NewNumericValue(tt.val),
+				NewIntegerValue(tt.pk),
+				NewIntegerValue(tt.val),
 				NewVarcharValue(tt.text),
 			}, tbl)
 
@@ -90,14 +90,14 @@ func TestDecodeRow(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "users",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	original, _ := NewRow([]Value{
-		NewNumericValue(42),
+		NewIntegerValue(42),
 		NewVarcharValue("Alice"),
 	}, tbl)
 
@@ -113,7 +113,7 @@ func TestDecodeRow(t *testing.T) {
 	}
 
 	v1, _ := decoded.GetValue(0)
-	if v1.Type() != schema.ColumnTypeNumeric {
+	if v1.Type() != schema.ColumnTypeInteger {
 		t.Error("First column should be NUMERIC")
 	}
 
@@ -129,16 +129,16 @@ func TestEncodeDecodeRoundTrip(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "products",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
-			{Name: "price", Type: schema.ColumnTypeNumeric, IsPrimaryKey: false},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
+			{Name: "price", Type: schema.ColumnTypeInteger, IsPrimaryKey: false},
 			{Name: "title", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	original, _ := NewRow([]Value{
-		NewNumericValue(999),
-		NewNumericValue(19999),
+		NewIntegerValue(999),
+		NewIntegerValue(19999),
 		NewVarcharValue("Laptop"),
 	}, tbl)
 
@@ -150,13 +150,13 @@ func TestEncodeDecodeRoundTrip(t *testing.T) {
 	}
 
 	v1, _ := decoded.GetValue(0)
-	nv1 := v1.(*NumericValue)
+	nv1 := v1.(*IntegerValue)
 	if nv1.GetInt64() != 999 {
 		t.Errorf("Column 0 = %v, want 999", nv1.GetInt64())
 	}
 
 	v2, _ := decoded.GetValue(1)
-	nv2 := v2.(*NumericValue)
+	nv2 := v2.(*IntegerValue)
 	if nv2.GetInt64() != 19999 {
 		t.Errorf("Column 1 = %v, want 19999", nv2.GetInt64())
 	}
@@ -173,7 +173,7 @@ func TestDecodeRowInvalidData(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		},
 		PrimaryKeyIndex: 0,
 	}

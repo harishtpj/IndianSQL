@@ -36,7 +36,7 @@ func TestCatalogCreateTable(t *testing.T) {
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
-					{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+					{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 					{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 				},
 				PrimaryKeyIndex: 0,
@@ -48,7 +48,7 @@ func TestCatalogCreateTable(t *testing.T) {
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
-					{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+					{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 				},
 				PrimaryKeyIndex: 0,
 			},
@@ -98,7 +98,7 @@ func TestCatalogGetTable(t *testing.T) {
 	table := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 		},
 		PrimaryKeyIndex: 0,
 	}
@@ -148,7 +148,7 @@ func TestCatalogTableExists(t *testing.T) {
 	table := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 		},
 		PrimaryKeyIndex: 0,
 	}
@@ -191,14 +191,14 @@ func TestCatalogListTables(t *testing.T) {
 		{
 			Name: "users",
 			Columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			PrimaryKeyIndex: 0,
 		},
 		{
 			Name: "products",
 			Columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			PrimaryKeyIndex: 0,
 		},
@@ -242,7 +242,7 @@ func TestCatalogTableCount(t *testing.T) {
 		table := &Table{
 			Name: "table" + string(rune('0'+i)),
 			Columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			PrimaryKeyIndex: 0,
 		}
@@ -267,7 +267,7 @@ func TestCatalogRootPageIDAssignment(t *testing.T) {
 	table1 := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 		},
 		PrimaryKeyIndex: 0,
 	}
@@ -281,7 +281,7 @@ func TestCatalogRootPageIDAssignment(t *testing.T) {
 	table2 := &Table{
 		Name: "products",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 		},
 		PrimaryKeyIndex: 0,
 	}
@@ -304,7 +304,7 @@ func TestCatalogSerializeDeserialize(t *testing.T) {
 	table1 := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
@@ -314,9 +314,9 @@ func TestCatalogSerializeDeserialize(t *testing.T) {
 	table2 := &Table{
 		Name: "products",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "title", Type: ColumnTypeVarchar, IsPrimaryKey: false},
-			{Name: "price", Type: ColumnTypeNumeric, IsPrimaryKey: false},
+			{Name: "price", Type: ColumnTypeInteger, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
@@ -424,7 +424,7 @@ func TestCatalogClear(t *testing.T) {
 		table := &Table{
 			Name: "table" + string(rune('0'+i)),
 			Columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			PrimaryKeyIndex: 0,
 		}

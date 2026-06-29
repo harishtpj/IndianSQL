@@ -17,7 +17,7 @@ func TestNewTable(t *testing.T) {
 			name:      "Valid table with single column",
 			tableName: "users",
 			columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			shouldErr: false,
 		},
@@ -25,9 +25,9 @@ func TestNewTable(t *testing.T) {
 			name:      "Valid table with multiple columns",
 			tableName: "users",
 			columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 				{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
-				{Name: "age", Type: ColumnTypeNumeric, IsPrimaryKey: false},
+				{Name: "age", Type: ColumnTypeInteger, IsPrimaryKey: false},
 			},
 			shouldErr: false,
 		},
@@ -35,7 +35,7 @@ func TestNewTable(t *testing.T) {
 			name:      "Empty table name should error",
 			tableName: "",
 			columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			},
 			shouldErr: true,
 			errMsg:    "name",
@@ -51,7 +51,7 @@ func TestNewTable(t *testing.T) {
 			name:      "No primary key should error",
 			tableName: "users",
 			columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: false},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: false},
 				{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 			},
 			shouldErr: true,
@@ -61,7 +61,7 @@ func TestNewTable(t *testing.T) {
 			name:      "Multiple primary keys should error",
 			tableName: "users",
 			columns: []*Column{
-				{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+				{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 				{Name: "email", Type: ColumnTypeVarchar, IsPrimaryKey: true},
 			},
 			shouldErr: true,
@@ -105,7 +105,7 @@ func TestTableValidate(t *testing.T) {
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
-					{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+					{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 				},
 				PrimaryKeyIndex: 0,
 			},
@@ -116,7 +116,7 @@ func TestTableValidate(t *testing.T) {
 			table: &Table{
 				Name: "users",
 				Columns: []*Column{
-					{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+					{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 					{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 				},
 				PrimaryKeyIndex: 0,
@@ -128,7 +128,7 @@ func TestTableValidate(t *testing.T) {
 			table: &Table{
 				Name: "",
 				Columns: []*Column{
-					{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+					{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 				},
 				PrimaryKeyIndex: 0,
 			},
@@ -160,7 +160,7 @@ func TestTableGetColumn(t *testing.T) {
 	table := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 			{Name: "email", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 		},
@@ -176,7 +176,7 @@ func TestTableGetColumn(t *testing.T) {
 			name:          "Find first column",
 			columnName:    "id",
 			expectedFound: true,
-			expectedType:  ColumnTypeNumeric,
+			expectedType:  ColumnTypeInteger,
 		},
 		{
 			name:          "Find middle column",
@@ -217,7 +217,7 @@ func TestTableGetColumnIndex(t *testing.T) {
 	table := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 			{Name: "email", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 		},
@@ -263,7 +263,7 @@ func TestTableGetColumnIndex(t *testing.T) {
 
 // Test Table.GetPrimaryKeyColumn()
 func TestTableGetPrimaryKeyColumn(t *testing.T) {
-	col1 := &Column{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true}
+	col1 := &Column{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true}
 	col2 := &Column{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false}
 
 	table := &Table{
@@ -282,7 +282,7 @@ func TestTableGetPrimaryKeyColumn(t *testing.T) {
 		t.Errorf("GetPrimaryKeyColumn() name = %v, want 'id'", pkCol.Name)
 	}
 
-	if pkCol.Type != ColumnTypeNumeric {
+	if pkCol.Type != ColumnTypeInteger {
 		t.Errorf("GetPrimaryKeyColumn() type = %v, want NUMERIC", pkCol.Type)
 	}
 
@@ -322,7 +322,7 @@ func TestTableColumnCount(t *testing.T) {
 				isPK := (i == 0)
 				cols[i] = &Column{
 					Name:         "col" + string(rune(i)),
-					Type:         ColumnTypeNumeric,
+					Type:         ColumnTypeInteger,
 					IsPrimaryKey: isPK,
 				}
 			}
@@ -342,7 +342,7 @@ func TestTableString(t *testing.T) {
 	table := &Table{
 		Name: "users",
 		Columns: []*Column{
-			{Name: "id", Type: ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 	}

@@ -24,11 +24,12 @@ func parseCreateColumns(cols []string) ([]*schema.Column, error) {
 		}
 
 		switch strings.ToLower(parts[1]) {
-		case "numeric", "num":
-			col.Type = schema.ColumnTypeNumeric
-
+		case "integer", "int":
+			col.Type = schema.ColumnTypeInteger
 		case "varchar", "text", "string":
 			col.Type = schema.ColumnTypeVarchar
+		case "boolean", "bool":
+			col.Type = schema.ColumnTypeBoolean
 
 		default:
 			return nil, fmt.Errorf("unknown type %q", parts[1])
@@ -61,19 +62,22 @@ func parseInsertValues(table *schema.Table, vals []string) ([]row.Value, error) 
 	for i, str := range vals {
 		switch table.Columns[i].Type {
 
-		case schema.ColumnTypeNumeric:
+		case schema.ColumnTypeInteger:
 			n, err := strconv.ParseInt(str, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"column %q expects NUMERIC",
+					"column %q expects INTEGER",
 					table.Columns[i].Name,
 				)
 			}
 
-			values = append(values, row.NewNumericValue(n))
+			values = append(values, row.NewIntegerValue(n))
 
 		case schema.ColumnTypeVarchar:
 			values = append(values, row.NewVarcharValue(str))
+
+		case schema.ColumnTypeBoolean:
+			values = append(values, row.NewBoolValue(str == "TRUE" || str == "true"))
 
 		default:
 			return nil, fmt.Errorf(

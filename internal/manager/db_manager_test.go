@@ -33,7 +33,7 @@ func TestExecuteCreateTable(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 	}
 
@@ -61,7 +61,7 @@ func TestExecuteCreateTableDuplicate(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 	}
 
 	ctx.ExecuteCreateTable("users", columns)
@@ -78,13 +78,13 @@ func TestExecuteInsert(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 	}
 	ctx.ExecuteCreateTable("users", columns)
 
 	values := []row.Value{
-		row.NewNumericValue(1),
+		row.NewIntegerValue(1),
 		row.NewVarcharValue("Alice"),
 	}
 
@@ -99,7 +99,7 @@ func TestExecuteInsertInvalidTable(t *testing.T) {
 	defer ctx.Close()
 
 	values := []row.Value{
-		row.NewNumericValue(1),
+		row.NewIntegerValue(1),
 	}
 
 	err := ctx.ExecuteInsert("nonexistent", values)
@@ -113,14 +113,14 @@ func TestExecuteInsertWrongColumnCount(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 	}
 	ctx.ExecuteCreateTable("users", columns)
 
 	// Insert with wrong column count
 	values := []row.Value{
-		row.NewNumericValue(1),
+		row.NewIntegerValue(1),
 		// Missing name column
 	}
 
@@ -135,16 +135,16 @@ func TestExecuteSelectAll(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
-		{Name: "value", Type: schema.ColumnTypeNumeric, IsPrimaryKey: false},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
+		{Name: "value", Type: schema.ColumnTypeInteger, IsPrimaryKey: false},
 	}
 	ctx.ExecuteCreateTable("test", columns)
 
 	// Insert rows
 	for i := 0; i < 5; i++ {
 		values := []row.Value{
-			row.NewNumericValue(int64(i)),
-			row.NewNumericValue(int64(i * 10)),
+			row.NewIntegerValue(int64(i)),
+			row.NewIntegerValue(int64(i * 10)),
 		}
 		ctx.ExecuteInsert("test", values)
 	}
@@ -165,7 +165,7 @@ func TestExecuteSelectAllEmpty(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 	}
 	ctx.ExecuteCreateTable("empty", columns)
 
@@ -194,7 +194,7 @@ func TestGetTableInfo(t *testing.T) {
 	defer ctx.Close()
 
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 	}
 	ctx.ExecuteCreateTable("users", columns)
@@ -219,9 +219,9 @@ func TestCreateInsertSelectFlow(t *testing.T) {
 
 	// CREATE TABLE
 	columns := []*schema.Column{
-		{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+		{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 		{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
-		{Name: "age", Type: schema.ColumnTypeNumeric, IsPrimaryKey: false},
+		{Name: "age", Type: schema.ColumnTypeInteger, IsPrimaryKey: false},
 	}
 	ctx.ExecuteCreateTable("persons", columns)
 
@@ -238,9 +238,9 @@ func TestCreateInsertSelectFlow(t *testing.T) {
 
 	for _, ins := range inserts {
 		values := []row.Value{
-			row.NewNumericValue(ins.id),
+			row.NewIntegerValue(ins.id),
 			row.NewVarcharValue(ins.name),
-			row.NewNumericValue(ins.age),
+			row.NewIntegerValue(ins.age),
 		}
 		ctx.ExecuteInsert("persons", values)
 	}
@@ -258,7 +258,7 @@ func TestCreateInsertSelectFlow(t *testing.T) {
 	// Verify data
 	for i, r := range rows {
 		v0, _ := r.GetValue(0)
-		id := v0.(*row.NumericValue).GetInt64()
+		id := v0.(*row.IntegerValue).GetInt64()
 
 		if id != inserts[i].id {
 			t.Errorf("Row %v ID = %v, want %v", i, id, inserts[i].id)

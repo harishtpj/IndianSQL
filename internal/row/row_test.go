@@ -20,14 +20,14 @@ func TestNumericValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nv := NewNumericValue(tt.val)
+			nv := NewIntegerValue(tt.val)
 			if nv.GetInt64() != tt.val {
 				t.Errorf("GetInt64() = %v, want %v", nv.GetInt64(), tt.val)
 			}
 			if nv.IsNull() {
 				t.Error("IsNull() should be false")
 			}
-			if nv.Type() != schema.ColumnTypeNumeric {
+			if nv.Type() != schema.ColumnTypeInteger {
 				t.Error("Type() should be NUMERIC")
 			}
 			if len(nv.Bytes()) != 9 {
@@ -38,11 +38,11 @@ func TestNumericValue(t *testing.T) {
 }
 
 func TestNullNumericValue(t *testing.T) {
-	nv := NewNullNumericValue()
+	nv := NewNullIntegerValue()
 	if !nv.IsNull() {
 		t.Error("IsNull() should be true")
 	}
-	if nv.Type() != schema.ColumnTypeNumeric {
+	if nv.Type() != schema.ColumnTypeInteger {
 		t.Error("Type() should still be NUMERIC")
 	}
 }
@@ -88,8 +88,8 @@ func TestNullVarcharValue(t *testing.T) {
 func TestValueInterface(t *testing.T) {
 	var v Value
 
-	v = NewNumericValue(42)
-	if v.Type() != schema.ColumnTypeNumeric {
+	v = NewIntegerValue(42)
+	if v.Type() != schema.ColumnTypeInteger {
 		t.Error("NumericValue should implement Value interface")
 	}
 
@@ -103,7 +103,7 @@ func TestNewRow(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
@@ -117,7 +117,7 @@ func TestNewRow(t *testing.T) {
 		{
 			name: "Valid row",
 			values: []Value{
-				NewNumericValue(1),
+				NewIntegerValue(1),
 				NewVarcharValue("Alice"),
 			},
 			shouldErr: false,
@@ -125,7 +125,7 @@ func TestNewRow(t *testing.T) {
 		{
 			name: "Wrong number of values",
 			values: []Value{
-				NewNumericValue(1),
+				NewIntegerValue(1),
 			},
 			shouldErr: true,
 		},
@@ -148,14 +148,14 @@ func TestRowGetValue(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	row, _ := NewRow([]Value{
-		NewNumericValue(1),
+		NewIntegerValue(1),
 		NewVarcharValue("Alice"),
 	}, tbl)
 
@@ -187,14 +187,14 @@ func TestRowPrimaryKeyValue(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	row, _ := NewRow([]Value{
-		NewNumericValue(123),
+		NewIntegerValue(123),
 		NewVarcharValue("Bob"),
 	}, tbl)
 
@@ -217,14 +217,14 @@ func TestRowString(t *testing.T) {
 	tbl := &schema.Table{
 		Name: "test",
 		Columns: []*schema.Column{
-			{Name: "id", Type: schema.ColumnTypeNumeric, IsPrimaryKey: true},
+			{Name: "id", Type: schema.ColumnTypeInteger, IsPrimaryKey: true},
 			{Name: "name", Type: schema.ColumnTypeVarchar, IsPrimaryKey: false},
 		},
 		PrimaryKeyIndex: 0,
 	}
 
 	row, _ := NewRow([]Value{
-		NewNumericValue(1),
+		NewIntegerValue(1),
 		NewVarcharValue("Alice"),
 	}, tbl)
 

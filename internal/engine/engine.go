@@ -9,12 +9,13 @@ import (
 )
 
 type SQLEngine struct {
-	db *manager.DBManager
+	db     *manager.DBManager
+	dbFile string
 }
 
 func NewSQLEngine(dbFile string) (*SQLEngine, error) {
 	db, err := manager.NewDBManager(dbFile)
-	return &SQLEngine{db}, err
+	return &SQLEngine{db, dbFile}, err
 }
 
 func (engine *SQLEngine) Execute(query string) (Result, error) {
@@ -189,4 +190,17 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 	default:
 		return nil, fmt.Errorf("unknown command: %q", cmd)
 	}
+}
+
+func (engine *SQLEngine) CommitDB() error {
+	err := engine.db.Close()
+	if err != nil {
+		return err
+	}
+	engine.db, err = manager.NewDBManager(engine.dbFile)
+	return err
+}
+
+func (engine *SQLEngine) GetDBName() string {
+	return engine.dbFile
 }
