@@ -143,7 +143,7 @@ func (h *Handler) HandleStmtExecute(context any, query string, args []any) (*mys
 }
 
 func (h *Handler) HandleStmtClose(context any) error {
-	return h.engine.CommitDB()
+	return nil
 }
 
 func (h *Handler) HandleOtherCommand(cmd byte, data []byte) error {

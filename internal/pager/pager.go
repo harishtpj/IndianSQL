@@ -88,12 +88,16 @@ func (p *Pager) FlushAll() error {
 	return nil
 }
 
+func (p *Pager) FlushToFile() error {
+	if err := p.FlushAll(); err != nil {
+		return err
+	}
+	return p.file.Flush()
+}
+
 func (p *Pager) Close() error {
 	if err := p.FlushAll(); err != nil {
 		return err
 	}
-	if err := p.file.Close(); err != nil {
-		return err
-	}
-	return nil
+	return p.file.Close()
 }

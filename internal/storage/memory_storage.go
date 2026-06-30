@@ -36,6 +36,10 @@ func (ms *MemoryStorage) Size() (int64, error) {
 	return int64(len(ms.data)), nil
 }
 
+func (ms *MemoryStorage) Flush() error {
+	return nil
+}
+
 func (ms *MemoryStorage) Close() error {
 	return nil
 }

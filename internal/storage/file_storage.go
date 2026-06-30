@@ -30,6 +30,10 @@ func (fs *FileStorage) Size() (int64, error) {
 	return info.Size(), nil
 }
 
+func (fs *FileStorage) Flush() error {
+	return fs.file.Sync()
+}
+
 func (fs *FileStorage) Close() error {
 	return fs.file.Close()
 }

@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -13,13 +14,12 @@ import (
 )
 
 type SQLEngine struct {
-	db     *manager.DBManager
-	dbFile string
+	db *manager.DBManager
 }
 
 func NewSQLEngine(dbFile string) (*SQLEngine, error) {
 	db, err := manager.NewDBManager(dbFile)
-	return &SQLEngine{db, dbFile}, err
+	return &SQLEngine{db}, err
 }
 
 func (engine *SQLEngine) Execute(query string) (Result, error) {
@@ -149,7 +149,7 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 					col.Type = schema.ColumnTypeInteger
 				case "varchar", "text", "string":
 					col.Type = schema.ColumnTypeVarchar
-				case "boolean", "bool":
+				case "boolean", "bool", "tinyint", "bit":
 					col.Type = schema.ColumnTypeBoolean
 				case "numeric", "num", "float":
 					col.Type = schema.ColumnTypeNumeric
@@ -285,21 +285,26 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			Rows:  dbRows,
 		}, nil
 
+	case *sqlparser.Commit:
+		engine.CommitDB()
+		return &MessageResult{
+			Message: "DB committed",
+		}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown statement type")
 	}
 }
 
 func (engine *SQLEngine) CommitDB() error {
-	err := engine.db.Close()
-	if err != nil {
-		return err
-	}
-	engine.db, err = manager.NewDBManager(engine.dbFile)
-	return err
+	return engine.db.Commit()
+}
+
+func (engine *SQLEngine) Close() error {
+	return engine.db.Close()
 }
 
 func (engine *SQLEngine) GetDBName() string {
-	return engine.dbFile
+	base := filepath.Base(engine.db.GetDBName())
+	return strings.TrimSuffix(base, filepath.Ext(base))
 }
-

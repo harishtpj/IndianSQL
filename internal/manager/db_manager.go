@@ -16,6 +16,7 @@ type DBManager struct {
 	Pager   *pager.Pager
 	Catalog *schema.Catalog
 	Trees   map[string]*btree.BTree
+	dbName  string
 }
 
 func NewDBManager(dbFile string) (*DBManager, error) {
@@ -45,6 +46,7 @@ func NewDBManager(dbFile string) (*DBManager, error) {
 			Pager:   pgr,
 			Catalog: cat,
 			Trees:   make(map[string]*btree.BTree),
+			dbName:  dbFile,
 		}, nil
 	}
 
@@ -67,11 +69,12 @@ func NewDBManager(dbFile string) (*DBManager, error) {
 		Pager:   pgr,
 		Catalog: cat,
 		Trees:   trees,
+		dbName:  dbFile,
 	}, nil
 }
 
-func (rc *DBManager) ExecuteCreateTable(tableName string, columns []*schema.Column) error {
-	if rc.Catalog.TableExists(tableName) {
+func (man *DBManager) ExecuteCreateTable(tableName string, columns []*schema.Column) error {
+	if man.Catalog.TableExists(tableName) {
 		return errors.New("Table already exists: " + tableName)
 	}
 
@@ -80,11 +83,11 @@ func (rc *DBManager) ExecuteCreateTable(tableName string, columns []*schema.Colu
 		return err
 	}
 
-	if err := rc.Catalog.CreateTable(table); err != nil {
+	if err := man.Catalog.CreateTable(table); err != nil {
 		return err
 	}
 
-	pg, err := rc.Pager.GetPage(table.RootPageID)
+	pg, err := man.Pager.GetPage(table.RootPageID)
 	if err != nil {
 		return err
 	}
@@ -93,20 +96,20 @@ func (rc *DBManager) ExecuteCreateTable(tableName string, columns []*schema.Colu
 		return err
 	}
 
-	if err := rc.Pager.SaveCatalog(rc.Catalog); err != nil {
+	if err := man.Pager.SaveCatalog(man.Catalog); err != nil {
 		return err
 	}
-	rc.Trees[tableName] = btree.NewTree(rc.Pager, table.RootPageID)
+	man.Trees[tableName] = btree.NewTree(man.Pager, table.RootPageID)
 	pg.Dirty = true
 	return nil
 }
 
-func (rc *DBManager) ExecuteInsert(tableName string, values []row.Value) error {
-	if !rc.Catalog.TableExists(tableName) {
+func (man *DBManager) ExecuteInsert(tableName string, values []row.Value) error {
+	if !man.Catalog.TableExists(tableName) {
 		return errors.New("Table doesn't exist: " + tableName)
 	}
 
-	table := rc.Catalog.GetTable(tableName)
+	table := man.Catalog.GetTable(tableName)
 
 	// Basic Table Validation
 	if table.ColumnCount() != len(values) {
@@ -135,16 +138,25 @@ func (rc *DBManager) ExecuteInsert(tableName string, values []row.Value) error {
 		return err
 	}
 
-	return rc.Trees[tableName].Insert(pk, rawRow)
+	if err := man.Trees[tableName].Insert(pk, rawRow); err != nil {
+		return err
+	}
+
+	pg, err := man.Pager.GetPage(table.RootPageID)
+	if err != nil {
+		return err
+	}
+	pg.Dirty = true
+	return nil
 }
 
-func (rc *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
-	if !rc.Catalog.TableExists(tableName) {
+func (man *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
+	if !man.Catalog.TableExists(tableName) {
 		return nil, errors.New("Table doesn't exist: " + tableName)
 	}
 
-	table := rc.Catalog.GetTable(tableName)
-	cursor, err := btree.NewCursor(rc.Trees[tableName])
+	table := man.Catalog.GetTable(tableName)
+	cursor, err := btree.NewCursor(man.Trees[tableName])
 	if err != nil {
 		return nil, err
 	}
@@ -171,18 +183,26 @@ func (rc *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
 	return rows, nil
 }
 
-func (rc *DBManager) Close() error {
-	if err := rc.Pager.SaveCatalog(rc.Catalog); err != nil {
+func (man *DBManager) Commit() error {
+	if err := man.Pager.SaveCatalog(man.Catalog); err != nil {
 		return err
 	}
 
-	if err := rc.Pager.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return man.Pager.FlushToFile()
 }
 
-func (rc *DBManager) GetTableInfo(tableName string) (*schema.Table, error) {
-	return rc.Catalog.GetTable(tableName), nil
+func (man *DBManager) Close() error {
+	if err := man.Pager.SaveCatalog(man.Catalog); err != nil {
+		return err
+	}
+
+	return man.Pager.Close()
+}
+
+func (man *DBManager) GetTableInfo(tableName string) (*schema.Table, error) {
+	return man.Catalog.GetTable(tableName), nil
+}
+
+func (man *DBManager) GetDBName() string {
+	return man.dbName
 }

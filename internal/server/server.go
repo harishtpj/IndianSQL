@@ -9,13 +9,12 @@ import (
 )
 
 type Server struct {
-	DBFile    string `yaml:"database"`
-	Host      string `yaml:"host"`
-	Port      int    `yaml:"port"`
-	Username  string `yaml:"username"`
-	Password  string `yaml:"password"`
-	srv       *server.Server
-	sqlEngine *engine.SQLEngine
+	DBFile   string `yaml:"database"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	srv      *server.Server
 }
 
 func (s Server) getAddr() string {
@@ -30,10 +29,6 @@ func (s *Server) Serve() error {
 	}
 
 	s.srv = server.NewDefaultServer()
-	s.sqlEngine, err = engine.NewSQLEngine(s.DBFile)
-	if err != nil {
-		return err
-	}
 	fmt.Println("[Server] Listening at", addr)
 
 	for {
@@ -42,15 +37,23 @@ func (s *Server) Serve() error {
 			continue
 		}
 
-		fmt.Printf("[Server] Client %s connected!\n", conn.LocalAddr())
+		fmt.Printf("[Server] Client %s connected!\n", conn.RemoteAddr().String())
 		go s.handle(conn)
 	}
 }
 
 func (s *Server) handle(c net.Conn) {
-	conn, err := s.srv.NewConn(c, s.Username, s.Password, NewHandler(s.sqlEngine))
+	sqlEngine, err := engine.NewSQLEngine(s.DBFile)
+	if err != nil {
+		fmt.Printf("[Server/Engine] Error: %v\n", err)
+		c.Close()
+		return
+	}
+
+	conn, err := s.srv.NewConn(c, s.Username, s.Password, NewHandler(sqlEngine))
 	if err != nil {
 		fmt.Printf("[Server] Error: %v\n", err)
+		sqlEngine.Close()
 		c.Close()
 		return
 	}
@@ -58,6 +61,7 @@ func (s *Server) handle(c net.Conn) {
 	for {
 		if err := conn.HandleCommand(); err != nil {
 			fmt.Printf("[Server] Error: %v\n", err)
+			sqlEngine.Close()
 			return
 		}
 	}
