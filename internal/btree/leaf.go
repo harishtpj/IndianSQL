@@ -16,6 +16,25 @@ func (n *Node) InsertLeafCell(pos int, cell *page.Cell) error {
 	return n.page.InsertCell(uint16(pos), cell)
 }
 
+func (n *Node) DeleteLeafCell(pos int) error {
+	if !n.IsLeaf() {
+		return errors.New("cannot delete leaf cell from internal node")
+	}
+
+	cells, err := n.LeafCells()
+	if err != nil {
+		return err
+	}
+
+	if pos < 0 || pos >= len(cells) {
+		return errors.New("invalid cell position")
+	}
+
+	copy(cells[pos:], cells[pos+1:])
+	cells = cells[:len(cells)-1]
+	return n.WriteLeafCells(cells)
+}
+
 func (n *Node) LeafCells() ([]*page.Cell, error) {
 	if !n.IsLeaf() {
 		return nil, apperrors.ErrInvalidPageType

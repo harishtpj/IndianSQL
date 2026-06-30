@@ -41,6 +41,19 @@ func (t *BTree) Insert(key uint64, value []byte) error {
 	return leaf.InsertLeafCell(pos, cell)
 }
 
+func (t *BTree) Delete(key uint64) error {
+	leaf, pos, found, err := t.FindLeaf(key)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return apperrors.ErrKeyNotFound
+	}
+
+	return leaf.DeleteLeafCell(pos)
+}
+
 func (t *BTree) splitRootLeaf(root *Node) error {
 	oldRoot := t.root
 	root, err := LoadNode(t.pager, oldRoot)

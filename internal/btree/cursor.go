@@ -119,6 +119,53 @@ func (c *Cursor) Count() (int, error) {
 	return cnt, nil
 }
 
+func (c *Cursor) Delete() error {
+	key, err := c.Key()
+	if err != nil {
+		return err
+	}
+
+	if err := c.tree.Delete(key); err != nil {
+		return err
+	}
+
+	node, err := LoadNode(c.tree.pager, c.pageID)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case node.CellCount() == 0:
+		if node.Header().NextLeaf == 0 {
+			c.finished = true
+			return nil
+		}
+
+		c.pageID = node.Header().NextLeaf
+		c.cellIdx = 0
+
+		next, err := LoadNode(c.tree.pager, c.pageID)
+		if err != nil {
+			return err
+		}
+
+		if next.CellCount() == 0 {
+			c.finished = true
+		}
+
+	case c.cellIdx >= node.CellCount():
+		if node.Header().NextLeaf == 0 {
+			c.finished = true
+			return nil
+		}
+
+		c.pageID = node.Header().NextLeaf
+		c.cellIdx = 0
+	}
+
+	return nil
+}
+
 func (c *Cursor) currentCell() (*page.Cell, error) {
 	if c.finished {
 		return nil, errors.New("cursor is iterated")

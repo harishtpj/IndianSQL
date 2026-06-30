@@ -218,6 +218,38 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			Message: "1 row inserted.",
 		}, nil
 
+	case *sqlparser.Delete:
+		if len(stmt.TableExprs) != 1 {
+			return nil, errors.New("only single-table DELETE is supported")
+		}
+
+		tblExpr, ok := stmt.TableExprs[0].(*sqlparser.AliasedTableExpr)
+		if !ok {
+			return nil, errors.New("unsupported table expression")
+		}
+
+		tableName := sqlparser.GetTableName(tblExpr.Expr).String()
+		if tableName == "" {
+			return nil, errors.New("unsupported table expression")
+		}
+
+		var predicate manager.Predicate
+		if stmt.Where != nil {
+			predicate, err = CompilePredicate(stmt.Where.Expr)
+			if err != nil {
+				return nil, fmt.Errorf("failed compilation of where predicate: %v", err)
+			}
+		}
+
+		delCnt, err := engine.db.ExecuteDelete(tableName, predicate)
+		if err != nil {
+			return nil, err
+		}
+
+		return &MessageResult{
+			Message: fmt.Sprint(delCnt, " row(s) deleted"),
+		}, nil
+
 	case *sqlparser.Select:
 		if len(stmt.From) != 1 {
 			return nil, errors.New("select must have exactly one table")

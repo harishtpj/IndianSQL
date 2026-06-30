@@ -152,6 +152,57 @@ func (man *DBManager) ExecuteInsert(tableName string, values []row.Value) error 
 	return nil
 }
 
+func (man *DBManager) ExecuteDelete(tableName string, cond Predicate) (int, error) {
+	if !man.Catalog.TableExists(tableName) {
+		return 0, errors.New("Table doesn't exist: " + tableName)
+	}
+
+	table := man.Catalog.GetTable(tableName)
+	cursor, err := btree.NewCursor(man.Trees[tableName])
+	if err != nil {
+		return 0, err
+	}
+
+	cnt := 0
+
+	for !cursor.IsFinished() {
+		key, err := cursor.Key()
+		if err != nil {
+			return 0, err
+		}
+
+		value, err := cursor.Value()
+		if err != nil {
+			return 0, err
+		}
+
+		r, err := row.NewDecoder().DecodeRow(key, value, table)
+		if err != nil {
+			return 0, err
+		}
+
+		if cond != nil {
+			res, err := cond(r)
+			if err != nil {
+				return cnt, err
+			}
+			if !res {
+				cursor.Next()
+				continue
+			}
+		}
+		cnt++
+		cursor.Delete()
+	}
+
+	pg, err := man.Pager.GetPage(table.RootPageID)
+	if err != nil {
+		return 0, err
+	}
+	pg.Dirty = true
+	return cnt, nil
+}
+
 func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond Predicate) ([]*row.Row, error) {
 	if !man.Catalog.TableExists(tableName) {
 		return nil, errors.New("Table doesn't exist: " + tableName)

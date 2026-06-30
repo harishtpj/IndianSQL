@@ -138,3 +138,44 @@ func TestBTreeInsertDuplicate(t *testing.T) {
 		t.Fatalf("expected ErrDuplicateKey, got %v", err)
 	}
 }
+
+func TestBTreeDelete(t *testing.T) {
+	p := newTestPager(t)
+	createLeafNode(t, p, 0)
+	tree := NewTree(p, 0)
+
+	keys := []uint64{30, 10, 20}
+	for _, k := range keys {
+		if err := tree.Insert(k, []byte("x")); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := tree.Delete(20); err != nil {
+		t.Fatal(err)
+	}
+
+	leaf, _, found, err := tree.FindLeaf(20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found {
+		t.Fatal("key 20 should have been deleted")
+	}
+
+	expected := []uint64{10, 30}
+	for i, want := range expected {
+		got, err := leaf.KeyAt(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Fatalf("wrong key at index %d: got=%d want=%d", i, got, want)
+		}
+	}
+
+	// Delete non-existent
+	if err := tree.Delete(40); !errors.Is(err, apperrors.ErrKeyNotFound) {
+		t.Fatalf("expected ErrKeyNotFound, got %v", err)
+	}
+}

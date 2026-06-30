@@ -7,6 +7,7 @@ var (
 	ErrNodeFull     = errors.New("node full")
 
 	ErrCorruption    = errors.New("database corruption")
+	ErrKeyNotFound   = errors.New("key not found")
 	ErrInvalidCell   = errors.New("invalid cell")
 	ErrInvalidHeader = errors.New("invalid header")
 
