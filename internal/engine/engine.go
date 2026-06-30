@@ -218,6 +218,54 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			Message: "1 row inserted.",
 		}, nil
 
+	case *sqlparser.Update:
+		if len(stmt.TableExprs) != 1 {
+			return nil, errors.New("only single-table update is supported")
+		}
+
+		tblExpr, ok := stmt.TableExprs[0].(*sqlparser.AliasedTableExpr)
+		if !ok {
+			return nil, errors.New("unsupported table expression")
+		}
+
+		tableName := sqlparser.GetTableName(tblExpr.Expr).String()
+		if tableName == "" {
+			return nil, errors.New("unsupported table expression")
+		}
+
+		var predicate manager.Predicate
+		if stmt.Where != nil {
+			predicate, err = CompilePredicate(stmt.Where.Expr)
+			if err != nil {
+				return nil, fmt.Errorf("failed compilation of where predicate: %v", err)
+			}
+		}
+
+		updates := make(map[string]row.Value)
+		for _, upd := range stmt.Exprs {
+			colName := upd.Name.Name.String()
+
+			val, err := CompileValue(upd.Expr)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"compile update expression for %s: %w",
+					colName,
+					err,
+				)
+			}
+
+			updates[colName] = val
+		}
+
+		delCnt, err := engine.db.ExecuteUpdate(tableName, updates, predicate)
+		if err != nil {
+			return nil, err
+		}
+
+		return &MessageResult{
+			Message: fmt.Sprint(delCnt, " row(s) updated"),
+		}, nil
+
 	case *sqlparser.Delete:
 		if len(stmt.TableExprs) != 1 {
 			return nil, errors.New("only single-table DELETE is supported")

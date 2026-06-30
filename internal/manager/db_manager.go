@@ -152,6 +152,75 @@ func (man *DBManager) ExecuteInsert(tableName string, values []row.Value) error 
 	return nil
 }
 
+func (man *DBManager) ExecuteUpdate(tableName string, updates map[string]row.Value, cond Predicate) (int, error) {
+	if !man.Catalog.TableExists(tableName) {
+		return 0, errors.New("Table doesn't exist: " + tableName)
+	}
+
+	table := man.Catalog.GetTable(tableName)
+	cursor, err := btree.NewCursor(man.Trees[tableName])
+	if err != nil {
+		return 0, err
+	}
+
+	updateRows := make(map[uint64][]byte)
+
+	for !cursor.IsFinished() {
+		key, err := cursor.Key()
+		if err != nil {
+			return 0, err
+		}
+
+		value, err := cursor.Value()
+		if err != nil {
+			return 0, err
+		}
+
+		r, err := row.NewDecoder().DecodeRow(key, value, table)
+		if err != nil {
+			return 0, err
+		}
+
+		if cond != nil {
+			res, err := cond(r)
+			if err != nil {
+				return 0, err
+			}
+			if !res {
+				cursor.Next()
+				continue
+			}
+		}
+
+		for colName, newVal := range updates {
+			colIdx := r.Schema.GetColumnIndex(colName)
+			if colIdx == -1 {
+				return 0, fmt.Errorf("invalid column name passed: %s", colName)
+			}
+			r.Values[colIdx] = &newVal
+		}
+		cursor.Delete()
+		pk, rawRow, err := row.NewEncoder().EncodeRow(r)
+		if err != nil {
+			return 0, err
+		}
+		updateRows[pk] = rawRow
+	}
+
+	for pk, rawRow := range updateRows {
+		if err := man.Trees[tableName].Insert(pk, rawRow); err != nil {
+			return 0, err
+		}
+	}
+
+	pg, err := man.Pager.GetPage(table.RootPageID)
+	if err != nil {
+		return 0, err
+	}
+	pg.Dirty = true
+	return len(updateRows), nil
+}
+
 func (man *DBManager) ExecuteDelete(tableName string, cond Predicate) (int, error) {
 	if !man.Catalog.TableExists(tableName) {
 		return 0, errors.New("Table doesn't exist: " + tableName)

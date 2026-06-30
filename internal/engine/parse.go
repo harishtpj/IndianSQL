@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -247,4 +248,40 @@ func compareValues(val row.Value, expr sqlparser.Expr) (int, error) {
 	}
 
 	return 0, fmt.Errorf("cannot compare %T with %T", val, expr)
+}
+
+func CompileValue(expr sqlparser.Expr) (row.Value, error) {
+	switch e := expr.(type) {
+	case *sqlparser.SQLVal:
+		switch e.Type {
+		case sqlparser.IntVal:
+			i, err := strconv.ParseInt(string(e.Val), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			return row.NewIntegerValue(i), nil
+
+		case sqlparser.FloatVal:
+			f, err := strconv.ParseFloat(string(e.Val), 64)
+			if err != nil {
+				return nil, err
+			}
+			return row.NewNumericValue(f), nil
+
+		case sqlparser.StrVal:
+			return row.NewVarcharValue(string(e.Val)), nil
+
+		default:
+			return nil, fmt.Errorf("unsupported literal type %v", e.Type)
+		}
+
+	case sqlparser.BoolVal:
+		return row.NewBoolValue(bool(e)), nil
+
+	case *sqlparser.NullVal:
+		return nil, errors.New("NULL values are not yet supported in UPDATE")
+
+	default:
+		return nil, fmt.Errorf("unsupported update expression %T", expr)
+	}
 }
