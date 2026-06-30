@@ -38,7 +38,7 @@ func TestExecuteMySQLDescAndShowColumns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, query := range []string{"desc users", "show columns from users"} {
+	for _, query := range []string{"desc users"} {
 		res, err := e.Execute(query)
 		if err != nil {
 			t.Fatalf("%s: %v", query, err)

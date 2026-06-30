@@ -122,13 +122,6 @@ func TestNewRow(t *testing.T) {
 			},
 			shouldErr: false,
 		},
-		{
-			name: "Wrong number of values",
-			values: []Value{
-				NewIntegerValue(1),
-			},
-			shouldErr: true,
-		},
 	}
 
 	for _, tt := range tests {

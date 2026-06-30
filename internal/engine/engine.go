@@ -234,6 +234,14 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			return nil, errors.New("unsupported select from clause")
 		}
 
+		var predicate manager.Predicate
+		if stmt.Where != nil {
+			predicate, err = CompilePredicate(stmt.Where.Expr)
+			if err != nil {
+				return nil, fmt.Errorf("failed compilation of where predicate: %v", err)
+			}
+		}
+
 		// TODO: Assuming that user could provide only one StarExpr
 		// In normal cases, user could also give table.*, which is NOT handled
 		var selectCols []string
@@ -255,7 +263,7 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			}
 		}
 
-		dbRows, err := engine.db.ExecuteSelect(tableName, selectCols, "")
+		dbRows, err := engine.db.ExecuteSelect(tableName, selectCols, predicate)
 		if err != nil {
 			return nil, err
 		}

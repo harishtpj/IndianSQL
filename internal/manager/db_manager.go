@@ -19,6 +19,8 @@ type DBManager struct {
 	dbName  string
 }
 
+type Predicate func(*row.Row) (bool, error)
+
 func NewDBManager(dbFile string) (*DBManager, error) {
 	pgr, err := pager.Open(dbFile)
 	if err != nil {
@@ -150,7 +152,7 @@ func (man *DBManager) ExecuteInsert(tableName string, values []row.Value) error 
 	return nil
 }
 
-func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond string) ([]*row.Row, error) {
+func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond Predicate) ([]*row.Row, error) {
 	if !man.Catalog.TableExists(tableName) {
 		return nil, errors.New("Table doesn't exist: " + tableName)
 	}
@@ -161,7 +163,7 @@ func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond string
 		return nil, err
 	}
 	rows := make([]*row.Row, 0)
-	for !cursor.IsFinished() {
+	for ; !cursor.IsFinished(); cursor.Next() {
 		key, err := cursor.Key()
 		if err != nil {
 			return nil, err
@@ -175,6 +177,17 @@ func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond string
 		r, err := row.NewDecoder().DecodeRow(key, value, table)
 		if err != nil {
 			return nil, err
+		}
+
+		// Application of WHERE predicate
+		if cond != nil {
+			res, err := cond(r)
+			if err != nil {
+				return nil, err
+			}
+			if !res {
+				continue
+			}
 		}
 
 		// Filter based on columns
@@ -193,14 +206,13 @@ func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond string
 		}
 
 		rows = append(rows, r)
-		cursor.Next()
 	}
 
 	return rows, nil
 }
 
 func (man *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
-	return man.ExecuteSelect(tableName, nil, "")
+	return man.ExecuteSelect(tableName, nil, nil)
 }
 
 func (man *DBManager) Commit() error {
