@@ -38,12 +38,14 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 		return &MessageResult{
 			Message: `Commands:
   open <database>
+  use <database> /* in current directory */
   create table <table> (col type [primary key], ...)
   insert into <table> values (...)
   select * from <table>
-  schema <table>
-  tables
-  exit`,
+  desc[ribe] <table>
+  show tables
+  commit
+  exit/quit`,
 		}, nil
 
 	case "open":
@@ -60,16 +62,6 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 
 		return &MessageResult{
 			Message: "Database opened.",
-		}, nil
-
-	case "schema":
-		table, err := engine.db.GetTableInfo(args)
-		if err != nil {
-			return nil, err
-		}
-
-		return &SchemaResult{
-			Table: table,
 		}, nil
 
 	case "tables":
@@ -91,34 +83,6 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 		return &SchemaResult{
 			Table: table,
 		}, nil
-
-	case "show":
-		fields := strings.Fields(args)
-		if len(fields) == 0 {
-			return nil, errors.New("usage: show tables|columns from <table>")
-		}
-
-		switch strings.ToLower(fields[0]) {
-		case "tables":
-			return &TablesResult{
-				Tables: engine.db.Catalog.ListTables(),
-			}, nil
-
-		case "columns", "fields":
-			if len(fields) < 3 {
-				return nil, errors.New("usage: show columns from <table>")
-			}
-			if !strings.EqualFold(fields[1], "from") && !strings.EqualFold(fields[1], "in") {
-				return nil, errors.New("usage: show columns from <table>")
-			}
-			table, err := engine.db.GetTableInfo(fields[2])
-			if err != nil {
-				return nil, err
-			}
-			return &SchemaResult{Table: table}, nil
-		default:
-			return nil, fmt.Errorf("unknown show command: %q", fields[0])
-		}
 
 	case "exit", "quit":
 		if engine.db != nil {
@@ -270,7 +234,28 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			return nil, errors.New("unsupported select from clause")
 		}
 
-		dbRows, err := engine.db.ExecuteSelectAll(tableName)
+		// TODO: Assuming that user could provide only one StarExpr
+		// In normal cases, user could also give table.*, which is NOT handled
+		var selectCols []string
+		for _, expr := range stmt.SelectExprs {
+			switch expr := expr.(type) {
+			case *sqlparser.StarExpr:
+				break
+			case *sqlparser.AliasedExpr:
+				switch col := expr.Expr.(type) {
+
+				case *sqlparser.ColName:
+					selectCols = append(selectCols, col.Name.String())
+
+				default:
+					return nil, fmt.Errorf("unsupported select expression %T", col)
+				}
+			default:
+				return nil, fmt.Errorf("invalid select expression: %T", expr)
+			}
+		}
+
+		dbRows, err := engine.db.ExecuteSelect(tableName, selectCols, "")
 		if err != nil {
 			return nil, err
 		}
@@ -280,9 +265,40 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
 			return nil, err
 		}
 
+		if selectCols != nil {
+			table = table.Filter(selectCols)
+		}
+
 		return &TableResult{
 			Table: table,
 			Rows:  dbRows,
+		}, nil
+
+	case *sqlparser.Show:
+		switch stmt.Type {
+		case "tables":
+			return &TablesResult{
+				Tables: engine.db.Catalog.ListTables(),
+			}, nil
+
+		default:
+			return nil, fmt.Errorf("unknown show command: %q", stmt.Type)
+		}
+
+	case *sqlparser.Use:
+		if engine.db != nil {
+			_ = engine.db.Close()
+		}
+
+		db, err := manager.NewDBManager(stmt.DBName.String() + ".idb")
+		if err != nil {
+			return nil, err
+		}
+
+		engine.db = db
+
+		return &MessageResult{
+			Message: "Database opened.",
 		}, nil
 
 	case *sqlparser.Commit:

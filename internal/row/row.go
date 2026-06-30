@@ -18,10 +18,6 @@ func NewRow(values []Value, tbl *schema.Table) (*Row, error) {
 		return nil, errors.New("table schema is empty!")
 	}
 
-	if len(values) != tbl.ColumnCount() {
-		return nil, fmt.Errorf("insufficient values: required %d, got %d", tbl.ColumnCount(), len(values))
-	}
-
 	valsPtr := make([]*Value, len(values))
 	for i, val := range values {
 		valsPtr[i] = &val

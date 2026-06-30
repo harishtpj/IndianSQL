@@ -119,6 +119,23 @@ func (t *Table) String() string {
 	return repr.String() + ")"
 }
 
+func (t *Table) Filter(cols []string) *Table {
+	newTab := &Table{
+		Name:            t.Name,
+		PrimaryKeyIndex: t.PrimaryKeyIndex,
+		RootPageID:      t.RootPageID,
+		Columns:         make([]*Column, len(cols)),
+	}
+
+	for i, cname := range cols {
+		if col := t.GetColumn(cname); col != nil {
+			newTab.Columns[i] = col
+		}
+	}
+
+	return newTab
+}
+
 func (t *Table) Serialize() ([]byte, error) {
 	buf := make([]byte, 0)
 	buf = binary.BigEndian.AppendUint16(buf, uint16(len(t.Name)))

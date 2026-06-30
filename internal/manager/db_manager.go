@@ -150,7 +150,7 @@ func (man *DBManager) ExecuteInsert(tableName string, values []row.Value) error 
 	return nil
 }
 
-func (man *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
+func (man *DBManager) ExecuteSelect(tableName string, cols []string, cond string) ([]*row.Row, error) {
 	if !man.Catalog.TableExists(tableName) {
 		return nil, errors.New("Table doesn't exist: " + tableName)
 	}
@@ -176,11 +176,31 @@ func (man *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Filter based on columns
+		if cols != nil {
+			vals := make([]row.Value, len(cols))
+			for i, cname := range cols {
+				vals[i], err = r.GetValueByName(cname)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if r, err = row.NewRow(vals, table); err != nil {
+				return nil, err
+			}
+		}
+
 		rows = append(rows, r)
 		cursor.Next()
 	}
 
 	return rows, nil
+}
+
+func (man *DBManager) ExecuteSelectAll(tableName string) ([]*row.Row, error) {
+	return man.ExecuteSelect(tableName, nil, "")
 }
 
 func (man *DBManager) Commit() error {
