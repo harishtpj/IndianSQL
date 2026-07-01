@@ -41,6 +41,8 @@ func (engine *SQLEngine) Execute(query string) (Result, error) {
   use <database> /* in current directory */
   create table <table> (col type [primary key], ...)
   insert into <table> values (...)
+  update <table> set <col> = <value> [where <cond>]
+  delete from <table> [where <cond>]
   select * from <table>
   desc[ribe] <table>
   show tables

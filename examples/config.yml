@@ -1,0 +1,8 @@
+# Sample Configuration file for IndianSQL server
+# Try giving username and password followed by running
+# indsql server --config config.yml
+database: scott.idb
+host: 0.0.0.0
+port: 3306
+username:
+password:
